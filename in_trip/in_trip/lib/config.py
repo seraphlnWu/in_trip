@@ -1,7 +1,8 @@
 #encoding=utf-8
 
-import os
 from ConfigParser import SafeConfigParser, NoOptionError
+
+from os.path import join, abspath, dirname
 
 from in_trip.lib.singleton import Singleton
 
@@ -9,7 +10,8 @@ class Config(object):
     """use singleton avoid global variables"""
     __metaclass__ = Singleton
 
-    DEFAULT_CONFIG_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../conf/config.ini'))
+    DEFAULT_CONFIG_FILE = abspath(join(dirname(__file__),
+                                       '../../conf/config.ini'))
     ACTUAL_CONFIG_FILE = None
     SECTION_NAME = 'main'
     def __init__(self):
