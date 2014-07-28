@@ -1,0 +1,99 @@
+[DEFAULT]
+daemonize 		= false
+graceful_timeout 	= 3
+base_path 		= /home/wangjian/buzzMaster
+log_path 		= /home/wangjian/buzzMaster
+
+[main]
+mq 			= rb://192.168.1.48:5672
+tyrant 			= 192.168.1.48:11211
+rd 			= redis://192.168.1.48:6379
+hb 			= hb://192.168.1.210:9090
+mysql 			= mysql://buzz:123@localhost/buzz_master
+mongo 			= mongo://192.168.1.48:27017/buzz_master
+emotion 		= http://192.168.1.93:80/sentiment/document
+
+[engine]
+daemonize 		= true
+bind 			= 127.0.0.1:6262
+proc_name 		= engine
+user 			= wangjian:wangjian
+pidfile 		= %(base_path)s/engine.pid
+log_file 		= %(log_path)s/engine.log
+max_greenlets 		= 15
+max_requests		= 10000
+number_workers 		= 2
+
+[timer]
+daemonize 		= true
+proc_name 		= timer
+unix_socket 		= %(base_path)s/timer.sock
+user 			= wangjian:wangjian
+pidfile 		= %(base_path)s/timer.pid
+log_file 		= %(log_path)s/timer.log
+engine_addr 		= 127.0.0.1:6262
+max_greenlets 		= 3
+
+[spider]
+daemonize 		= true
+proc_name 		= spider
+user 			= wangjian:wangjian
+log_file 		= %(log_path)s/engine.log
+pidfile 		= %(base_path)s/engine.pid
+timer_addr 		= unix://%(base_path)s/timer.sock
+max_greenlets 		= 15
+max_requests		= 10000
+number_workers 		= 2
+
+[extractor]
+daemonize		= true
+proc_name 		= extractor
+user 			= wangjian:wangjian
+pidfile 		= %(base_path)s/extractor.pid
+log_file 		= %(log_path)s/extractor.log
+engine_addr 		= 127.0.0.1:6262
+max_requests		= 10000
+number_workers 		= 5
+
+[loggers]
+keys 			= root, spider, extractor
+
+[logger_root]
+level 			= INFO
+handlers 		= console
+
+[logger_spider]
+level 			= INFO
+handlers 		= console
+qualname 		= spider
+propagate 		= 0
+
+[logger_extractor]
+level 			= INFO
+handlers 		= console
+qualname 		= extractor
+propagate 		= 0
+
+[handlers]
+keys 			= scribe, console
+
+[handler_scribe]
+class 			= buzz.lib.log.ScribeHandler
+args 			= ("127.0.0.1", 1463)
+level 			= INFO
+formatter 		= generic
+
+[handler_console]
+class 			= StreamHandler
+args 			= (sys.stderr,)
+level 			= NOTSET
+formatter 		= default
+
+[formatters]
+keys 			= default, generic
+
+[formatter_generic]
+format 			= [%(asctime)s]-%(hostname)s %(levelname)s "%(message)s"
+
+[formatter_default]
+format 			= [%(asctime)s] %(levelname)s "%(message)s"

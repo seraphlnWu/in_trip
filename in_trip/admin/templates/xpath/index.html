@@ -1,0 +1,279 @@
+<%inherit file="../base.html"/>
+<%def name="title()">
+    XPath管理
+</%def>
+
+<%def name="style()">
+    <style type="text/css">
+        table {
+           table-layout:fixed;
+        }
+        .width-limit {width:140px;word-wrap:break-word;}
+    </style>
+</%def>
+
+<%def name="content()">
+    <div>
+        <form class="form-search" method="get" style="margin-bottom:15px;margin-top:10px;margin-left:auto;margin-right:auto;width:60%;">
+            <div class="input-append">
+                <input type="text" name="keyword" class="input-xlarge search-query" placeholder="xpath id or url" value="${keyword}">
+                <button type="submit" class="btn">Search</button>&nbsp;&nbsp;&nbsp;
+                <!--<a href="javascript:void(0)" id="add-btn" class="btn btn-success"><i class="icon-plus"></i>添加</a> -->
+            </div>
+        </form>
+    </div>
+    <div id="succeed-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作成功.</span>
+    </div>
+
+    <div id="error-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作失败.</span>
+    </div>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <td style="width:48px;">Siteid</td>
+            <td>SiteName</td>
+            <td class="width-limit" style="width:40%;">Domain</td>
+            <td style="width:60px;">operation&nbsp;&nbsp;</td>
+        </tr>
+        </thead>
+        <tbody>
+        % if not sites:
+            <tr>没有结果!</tr>
+        % else:
+            % for site in sites:
+                <tr cls="${site._id}" class="expand" query="${query}">
+                    <td>${site._id}</td>
+                    <td>${site.site_name}</td>
+                    <td class="width-limit">${site.domain}</td>
+                    <td>
+                    <!--    <a href="javascript:void(0)" class="operation"><i class="icon-edit"></i></a>
+                        <a href="javascript:void(0)" class="operation"><i class="icon-remove"></i></a>
+                    -->
+                    </td>
+                </tr>
+                % if site.xpath:
+                    % for xpath in site.xpath:
+                        % if xpath['status'] == 1:
+                        <tr class="expand-${site._id} alert alert-error" id="row-${xpath['_id']}">
+                            <td>待审核</td>
+                        % elif xpath['status'] == 2: 
+                        <tr class="expand-${site._id} alert alert-error" id="row-${xpath['_id']}">
+                            <td>已删除</td>
+                        % else:
+                            <tr class="expand-${site._id} well" id="row-${xpath['_id']}">
+                            <td>已审核</td>
+                        % endif
+                        <td>
+                        % for key, value in xpath['xpath'].iteritems():
+                        <p>${key}: ${value}</p>
+                        % endfor
+                        </td>
+                        <td class="width-limit"><a href="${xpath['eg'][0]}" target="_blank">${xpath['eg'][0]}</a></td>
+                        <td>
+                            <a href="/xpath/update/${xpath['_id']}" class="operation"><i class="icon-edit"></i></a>
+                            <a href="javascript:void(0)" class="operation del-btn" cls="${xpath['_id']}"><i class="icon-remove"></i></a>
+                        </td>
+                        </tr>
+                    % endfor
+                % endif
+            % endfor
+        %endif
+    </table>
+    % if not keyword:
+        <div class="pagination pagination-centered">
+            <ul>
+            % for page_no, label in h.pagination(page):
+                % if page_no == page:
+                    <li class="disabled"><a href="/xpath/index/${page_no}">${label}</a></li>
+                % elif page_no > 0:
+                    <li class="active"><a href="/xpath/index/${page_no}">${label}</a></li>
+                % else:
+                    <li class="disabled"><a href="javascript:void(0)">${label}</a></li>
+                % endif
+            % endfor
+            </ul>
+        </div>
+    % endif
+    <div id="add-modal" class="modal hide fade">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>添加XPath</h3>
+        </div>
+        <div class="modal-body">
+            <!-- <div id="error-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <span>操作失败.</span>
+            </div> -->
+
+            <form class="form-horizontal" id="add-form" action="/xpath/add" method="post">
+                <div class="control-group">
+                    <label class="control-label" for="eg">URL:</label>
+                    <div class="controls"><input type="text" name="eg" id="eg" check-type="required" required-message="不能为空!" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="title">标题:</label>
+                    <div class="controls"><input type="text" name="title" id="title" check-type="required" required-message="不能为空!" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="time">时间:</label>
+                    <div class="controls"><input type="text" name="time" id="time" check-type="required" required-message="不能为空" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="content">正文:</label>
+                    <div class="controls"><input type="text" name="content" id="content" check-type="required" required-message="不能为空" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="author">作者:</label>
+                    <div class="controls"><input type="text" name="author" id="author" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="comment_count">回复数:</label>
+                    <div class="controls"><input type="text" name="comment_count" id="comment" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="view_count">浏览数:</label>
+                    <div class="controls"><input type="text" name="view_count" id="view_count" class="input-xlarge"/></div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <a href="javascript:void(0))" class="btn modal-close" cls="add-modal">取&nbsp;消</a>
+            <a href="javascript:void(0)" class="btn btn-primary" id="add-submit-btn">提&nbsp;交</a>
+        </div>
+    </div>
+    <script type="text/javascript" src="/static/js/bootstrap-validation.js"></script> 
+    <script type="text/javascript" src="/static/js/jquery-ajax-submit.js"></script> 
+    <script type="text/javascript" src="/static/js/jquery-utils.js"></script> 
+    <script type="text/javascript">
+        $('#add-btn').click(function ( ){
+            $("#add-modal").modal("show");
+        });
+
+        $(".modal-close").click(function () {
+            var cls = $(this).attr('cls');
+            $("#" + cls).modal('hide');
+        });
+
+        $('#add-submit-btn').click(function () {
+           if (!$('#add-form').validation())
+                return false;
+            var options = {
+                type: "post",
+                url: $("#add-form").attr('action'),
+                success: function (data) {
+                    if (data.status) {
+                        $('#add-form').reset();
+                        $("#add-modal").modal('hide');
+                        showTip("succeed-alert-tip");
+                    } else {
+                        showTip("error-alert-tip");
+                    }
+                },
+            };
+            $("#add-form").ajaxSubmit(options);
+        });
+
+        $('.expand').click(function () {
+                var self = $(this);
+                var cls = self.attr('cls');
+                var query = self.attr('query');
+                if (query == 'false') {
+                    self.attr('query', 'true');
+                    $.get("/xpath/j_get_xpaths",
+                        {'site_id': cls},
+                        function (data) {
+                            if (data.length < 1) {
+                                var tr = document.createElement('tr');
+                                var td1 = document.createElement('td');
+                                td1.innerText = "没有xpath";
+                                td1.style.color = "red";
+                                td1.colSpan = 4;
+                                tr.appendChild(td1);
+                                $(tr).insertAfter(self);
+                                setTimeout(function () {td1.remove();}, 1000);
+                            }
+                            else {
+                                for (index in data) {
+                                    var row = data[index];
+                                    var tr = document.createElement('tr');
+                                    tr.setAttribute('id', "row-" + row._id);
+                                    var td1 = document.createElement('td');
+                                    if (row.status > 0) {
+                                        td1.innerText = "待审核";
+                                        tr.setAttribute('class', 'expand-' + cls + ' alert alert-error')
+                                    } else {
+                                        td1.innerText = "已审核"; 
+                                        tr.setAttribute('class', "expand-" + cls + " well");
+                                    }
+                                    tr.appendChild(td1)
+                                    var td2 = document.createElement('td');
+                                    var xpath = row.xpath;
+                                    for (var column in xpath) {
+                                        var p = document.createElement('p');
+                                        if (column == 'route') {
+                                            p.innerText = column + ":" + xpath[column];
+                                        } else {
+                                            p.innerText = column + ":" + xpath[column][0].join('\n');
+                                        }
+                                        td2.appendChild(p);
+                                    }
+                                    tr.appendChild(td2);
+                                    var td3 = document.createElement('td');
+                                    td3.setAttribute('class', "width-limit");
+                                    var xpath_url = document.createElement('a');
+                                    xpath_url.href = row.eg;
+                                    xpath_url.target = "_blank";
+                                    xpath_url.innerText = row.eg;
+                                    td3.appendChild(xpath_url);
+                                    tr.appendChild(td3);
+
+                                    //update link
+                                    var td4 = document.createElement('td');
+                                    var a = document.createElement('a');
+                                    a.href = "/xpath/update/" + row._id;
+                                    a.setAttribute('class', "operation");
+                                    //a.setAttribute('cls', row._id);
+                                    var i = document.createElement('a');
+                                    i.setAttribute('class', 'icon-edit');
+                                    a.appendChild(i);
+                                    td4.appendChild(a);
+                                    //del btn
+                                    var a = document.createElement('a');
+                                    //a.href = "/xpath/update/" + row._id;
+                                    a.setAttribute('class', "operation del-btn");
+                                    a.setAttribute('cls', row._id);
+                                    var i = document.createElement('a');
+                                    i.setAttribute('class', 'icon-remove');
+                                    a.appendChild(i);
+                                    td4.appendChild(a);
+
+                                    tr.appendChild(td4);
+                                    $(tr).insertAfter(self);
+                                };
+                            //self.attr('query', 'true');
+                        }
+                    });
+                }
+                $('.expand-' + cls).toggle();
+        });
+        
+        $(document).on('click', '.del-btn', function (data) {
+           if (confirm("确定要删除么？")) {
+                var self = $(this);
+                var cls = self.attr('cls');
+                $.get('/xpath/j_delete', {'_id': cls}, function (data) {
+                    if (data.status) {
+                        $("#row-" + cls).remove()
+                        showTip("succeed-alert-tip");
+                    } else {
+                        showTip("error-alert-tip");
+                    }
+                });
+            }
+        });
+    </script>
+</%def>

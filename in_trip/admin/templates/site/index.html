@@ -1,0 +1,315 @@
+<%inherit file="../base.html"/>
+<%!
+from buzz.lib.consts import INDUSTRY
+%>
+<%def name="title()">
+    网站管理
+</%def>
+
+<%!
+from admin.config.consts import ROLE 
+from bottle import request
+s = request.environ.get('beaker.session')
+%>
+<%def name="content()">
+% if s.get('role', None) == ROLE.ROOT:
+    <div id="succeed-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作成功.</span>
+    </div>
+    <div id="error-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作失败.</span>
+    </div>
+    <div id="duplicated-alert-tip" class="alert fade in alert-error" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>已经添加过.</span>
+    </div>
+    <div>
+        <form class="form-search" method="get" style="margin-bottom:15px;margin-top:10px;margin-left:auto;margin-right:auto;width:60%;">
+            <div class="input-append">
+                <input type="text" name="keyword" class="input-xlarge search-query" placeholder="域名" value="${keyword}">
+
+                <div class="dropdown" style="display:inline-block;">
+                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret" style="margin-top:12px;"></span></a>
+                    <ul class="dropdown-menu">
+                    % for name, industry_id in INDUSTRY.iteritems():
+                        % if isinstance(industry_id, int):
+                        <li><a class="dropdown-menu-item" cls="${name}" href="javascript:void(0)">${name}</a></li>
+                        % endif
+                    % endfor
+                    </ul>
+                </div>
+                <button type="submit" class="btn">Search</button>&nbsp;&nbsp;&nbsp;
+                <a href="javascript:void(0)" class="btn btn-success" id="add-site"><i class="icon-plus"></i>添加网站</a>
+            </div>
+        </form>
+    </div>
+
+% if not sites:
+    <p>没有了.</p>
+% else:
+    <div id="site_list">
+        <table class="table table-hover">
+        <thead>
+        <tr>
+            <td>Siteid</td>
+            <td>SiteName</td>
+            <td>Domain</td>
+            <td>Industry</td>
+            <td>Priority</td>
+            <td>operation</td>
+        </tr>
+        </thead>
+        <tbody>
+        % for site in sites:
+        <tr id="row_${site._id}" cls="${site.url}">
+            <td>${site._id}</td>
+            <td>${site.site_name}</td>
+            <td><a href="//www.${site.domain}" target="_blank">${site.domain}</a></td>
+            <td>${INDUSTRY[site.industry_id]}</td>
+            <td>${site.prior_level}</td>
+            <td>
+                <a href="javascript:void(0)" class="operation edit-btn" cls="${site._id}"><i class="icon-edit"></i></a>
+              % if site.status == 2 :
+              <a href="javascript:void(0)" class="operation op-btn" cls="${site._id}"><i class="icon-play"></i></a>
+              %else:
+              <a href="javascript:void(0)" class="operation op-btn" cls="${site._id}"><i class="icon-pause"></i></a>
+              %endif
+                <a href="javascript:void(0)" class="operation del-btn" cls="${site._id}"><i class="icon-remove"></i></a>
+            </td>
+        </tr>
+        % endfor
+        </tbody>
+        </table>
+    </div>
+
+%endif
+
+<div class="pagination pagination-centered">
+    <ul>
+      % if not keyword:
+        % for page_no, label in h.pagination(page):
+          % if page_no == page:
+            <li class="disabled"><a href="/site/index/${page_no}">${label}</a></li>
+          % elif page_no > 0:
+            <li class="active"><a href="/site/index/${page_no}">${label}</a></li>
+          % else:
+            <li class="disabled"><a href="javascript:void(0)">${label}</a></li>
+          % endif
+       % endfor
+     % endif
+    </ul>
+</div>
+<div id="add-modal" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>增加一个网站</h3>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal" id="add-form" action="/site/add" method="post">
+            <div class="control-group">
+                <label class="control-label" for="site_name">网站名称:</label>
+                <div class="controls"><input type="text" name="site_name" id="site_name" check-type="required" required-message="不能为空!"/></div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="url">URL:</label>
+                <div class="controls"><input type="text" name="url" id="url" check-type="required" required-message="不能为空!"/></div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="prior_level">优先级:</label>
+                <div class="controls">
+                    <select name="prior_level">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="industry_id">行业:</label>
+                <div class="controls">
+                       <select name="industry_id" id="industry_id">
+                          % for name, industry_id in INDUSTRY.iteritems():
+                              % if isinstance(industry_id, int):
+                                  <option value="${industry_id}">${name}</option>
+                              % endif
+                          % endfor
+                       </select>
+                </div>
+            </div>
+
+        </form>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:void(0)" class="btn modal-close" cls="add-modal">取&nbsp;消</a>
+        <a href="javascript:void(0)" class="btn btn-primary" id="add-submit-btn">提&nbsp;交</a>
+    </div>
+</div>
+<div id="edit-modal" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>编辑网站</h3>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal" id="edit-form" action="/site/update" method="post">
+            <input type="hidden" name="_id"/>
+            <div class="control-group">
+                <label class="control-label" for="site_name">网站名称:</label>
+                <div class="controls"><input type="text" name="site_name" id="site_name" check-type="required" required-message="不能为空!"/></div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="url">URL:</label>
+                <div class="controls"><input type="text" name="url" id="url" check-type="required" required-message="不能为空!"/></div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="prior_level">优先级:</label>
+                <div class="controls">
+                    <select name="prior_level">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="industry_id">行业:</label>
+                <div class="controls">
+                       <select name="industry_id" id="industry_id">
+                          % for name, industry_id in INDUSTRY.iteritems():
+                              % if isinstance(industry_id, int):
+                                  <option value="${industry_id}">${name}</option>
+                              % endif
+                          % endfor
+                       </select>
+                </div>
+            </div>
+
+        </form>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:void(0)" class="btn modal-close" cls="edit-modal">取&nbsp;消</a>
+        <a href="javascript:void(0)" class="btn btn-primary" id="edit-submit-btn">提&nbsp;交</a>
+    </div>
+</div>
+<script type="text/javascript">
+    $(":input[name=keyword]").focus();
+    $("#add-site").click(function () {
+        $("#add-modal").modal('show');
+    });
+    
+    $(".modal-close").click(function () {
+        var cls = $(this).attr('cls');
+        $("#" + cls).modal('hide');
+    });
+
+    $(".dropdown-menu-item").click(function () {
+        $(":input[name=keyword]").val($(this).attr('cls'));
+    });
+
+    $('#add-submit-btn').click(function () {
+        if(!$('#add-form').validation())
+            return false;
+        var options = {
+            type: "post",
+            url: $("#add-form").attr('action'),
+            success: function (data) {
+                if (data.status) {
+                    $('#add-form').reset();
+                    $("#add-modal").modal('hide');
+                    showTip('succeed-alert-tip')
+                    location.reload()
+                } else {
+                    $("#add-modal").modal('hide');
+                    showTip('duplicated-alert-tip')
+                }
+            },
+        };
+        $("#add-form").ajaxSubmit(options);
+    });
+    
+    $('.del-btn').click(function () {
+        if (confirm("确定要删除？")) {
+            var _id = $(this).attr('cls');
+            $.post("/site/j_delete",
+                {'_id': _id},
+                function (data) {
+                    if (data.status) {
+                        $("#row_" + _id).remove();
+                         showTip("succeed-alert-tip");
+                    } else {
+                         showTip("error-alert-tip");
+                    }
+            });
+        }
+    });
+
+    $(".op-btn").click(function (e) {
+      e.stopPropagation();
+      var _id = $(this).attr('cls');
+      if ($(this).find('i').attr('class') == "icon-play"){
+        $(this).find('i').attr('class','icon-pause')
+      }else{
+        $(this).find('i').attr('class','icon-play')
+      }
+
+        $.get("/site/j_op",
+            {'_id': _id},
+            function (data) {
+            });
+        });
+
+    $('.edit-btn').click(function () {
+        var _id = $(this).attr('cls');
+        $.get("/site/j_get_site/" + _id,
+            function (data) {
+                if (data.status) {
+                    var site = data.site;
+                    $("#edit-form :input[name=_id]").val(site._id);
+                    $("#edit-form :input[name=site_name]").val(site.site_name);
+                    $("#edit-form :input[name=url]").val(site.url);
+                    $("#edit-form :input[name=prior_level]").val(site.prior_level);
+                    $("#edit-form :input[name=industry_id]").val(site.industry_id);
+                } else {
+                    showTip("error-alert-tip");
+                }
+            }
+        );
+        $("#edit-modal").modal('show');
+    });
+
+    $('#edit-submit-btn').click(function () {
+        if (!$('#edit-form').validation())
+            return false;
+        var _id = $('#edit-form :input[name=_id]').val();
+        var row = $("#row_" + _id);
+        var options = {
+            type: "post",
+            url: $("#edit-form").attr('action'),
+            success: function (data) {
+                $("#edit-modal").modal('hide');
+                row.children().eq(1).text($("#edit-form :input[name=site_name]").val());
+                var domain_link = row.children().eq(2).children('a').first();
+                domain_link.text(data.domain);
+                domain_link.attr('href', '//' + data.domain);
+                row.children().eq(3).text($("#edit-form :input[name=industry_id] option:selected").text());
+                row.children().eq(4).text($("#edit-form :input[name=prior_level] option:selected").text());
+                row.attr('cls', $("#edit-form :input[name=url]").val());
+                $('#edit-form').reset();
+                showTip('succeed-alert-tip');
+            },
+        };
+
+        $('#edit-form').ajaxSubmit(options);
+    });
+</script>
+%else:
+<h2>无权限查看当前页面</h2>
+%endif
+</%def>

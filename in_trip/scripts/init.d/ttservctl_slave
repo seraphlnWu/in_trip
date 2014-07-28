@@ -1,0 +1,172 @@
+#! /bin/sh
+
+#----------------------------------------------------------------
+# Startup script for the server of Tokyo Tyrant
+#----------------------------------------------------------------
+
+
+# configuration variables
+prog="ttservctl"
+cmd="ttserver"
+{% if grains['host'] == "bj-social-42" %}
+basedir="/data/ttserver/slave"
+{% else %}
+basedir="/data2/ttserver/slave"
+{% endif %}
+host="{{ grains['ip_interfaces']['eth1'][0] }}"
+port="11212"
+pidfile="$basedir/ttserver.pid"
+logfile="$basedir/ttserver.log"
+#ulogdir="$basedir/ulog"
+#ulimsiz="512m"
+sid=2
+mhost="{{ grains['ip_interfaces']['eth1'][0] }}"
+mport="11211"
+rtsfile="$basedir/ttserver.rts"
+mul="127"
+dbname="$basedir/buzz_master.tch#bnum=200000000#xmsiz=12884901888#rcnum=3000000#opts=ld" # 12g memory, cache 3 millon record
+retval=0
+
+
+# setting environment variables
+LANG=C
+LC_ALL=C
+PATH="$PATH:/sbin:/usr/sbin:/usr/local/sbin"
+export LANG LC_ALL PATH
+
+
+# start the server
+start(){
+  printf 'Starting the server of Tokyo Tyrant\n'
+  mkdir -p "$basedir"
+  if [ -z "$basedir" ] || [ -z "$port" ] || [ -z "$pidfile" ] || [ -z "$dbname" ] || [ -z "$host" ]; then
+    printf 'Invalid configuration\n'
+    retval=1
+  elif ! [ -d "$basedir" ] ; then
+    printf 'No such directory: %s\n' "$basedir"
+    retval=1
+  elif [ -f "$pidfile" ] ; then
+    pid=`cat "$pidfile"`
+    printf 'Existing process: %d\n' "$pid"
+    retval=1
+  else
+    cmd="$cmd -host $host -port $port -dmn -pid $pidfile"
+    if [ -n "$logfile" ] ; then
+      cmd="$cmd -log $logfile"
+    fi
+    if [ -n "$ulogdir" ] ; then
+      mkdir -p "$ulogdir"
+      cmd="$cmd -ulog $ulogdir"
+    fi
+    if [ -n "$ulimsiz" ] ; then
+      cmd="$cmd -ulim $ulimsiz"
+    fi
+    if [ -n "$sid" ] ; then
+      cmd="$cmd -sid $sid"
+    fi
+    if [ -n "$mhost" ] ; then
+      cmd="$cmd -mhost $mhost"
+    fi
+    if [ -n "$mport" ] ; then
+      cmd="$cmd -mport $mport"
+    fi
+    if [ -n "$rtsfile" ] ; then
+      cmd="$cmd -rts $rtsfile"
+    fi
+    if [ -n "$mul" ] ; then
+      cmd="$cmd -mul $mul"
+    fi
+    printf "Executing: %s\n" "$cmd"
+    cmd="$cmd $dbname"
+    $cmd
+    if [ "$?" -eq 0 ] ; then
+      printf 'Done\n'
+    else
+      printf 'The server could not started\n'
+      retval=1
+    fi
+  fi
+}
+
+
+# stop the server
+stop(){
+  printf 'Stopping the server of Tokyo Tyrant\n'
+  if [ -f "$pidfile" ] ; then
+    pid=`cat "$pidfile"`
+    printf "Sending the terminal signal to the process: %s\n" "$pid"
+    kill -TERM "$pid"
+    c=0
+    while true ; do
+      sleep 0.1
+      if [ -f "$pidfile" ] ; then
+        c=`expr $c + 1`
+        if [ "$c" -ge 100 ] ; then
+          printf 'Hanging process: %d\n' "$pid"
+          retval=1
+          break
+        fi
+      else
+        printf 'Done\n'
+        break
+      fi
+    done
+  else
+    printf 'No process found\n'
+    retval=1
+  fi
+}
+
+
+# send HUP to the server for log rotation
+hup(){
+  printf 'Sending HUP signal to the server of Tokyo Tyrant\n'
+  if [ -f "$pidfile" ] ; then
+    pid=`cat "$pidfile"`
+    printf "Sending the hangup signal to the process: %s\n" "$pid"
+    kill -HUP "$pid"
+    printf 'Done\n'
+  else
+    printf 'No process found\n'
+    retval=1
+  fi
+}
+
+
+# check permission
+if [ -d "$basedir" ] && ! touch "$basedir/$$" >/dev/null 2>&1
+then
+  printf 'Permission denied\n'
+  exit 1
+fi
+rm -f "$basedir/$$"
+
+
+# dispatch the command
+case "$1" in
+start)
+  start
+  ;;
+stop)
+  stop
+  ;;
+restart)
+  stop
+  start
+  ;;
+hup)
+  hup
+  ;;
+*)
+  printf 'Usage: %s {start|stop|restart|hup}\n' "$prog"
+  exit 1
+  ;;
+esac
+
+
+# exit
+exit "$retval"
+
+
+
+# END OF FILE

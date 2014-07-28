@@ -1,0 +1,63 @@
+<%inherit file="../base.html"/>
+<%def name="title()">
+    下载管理
+</%def>
+
+<%def name="content()">
+    <div id="succeed-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作成功.</span>
+    </div>
+    <div id="error-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作失败.</span>
+    </div>
+    <table class="table table-hover">
+    <thead>
+    <tr>
+        <td>下载任务编号</td>
+        <td>项目/关键词</td>
+        <td>起止时间</td>
+        <td>创建时间</td>
+        <td>状态</td>
+    </tr>
+    </thead>
+    <tbody>
+    % for task in tasks:
+    <tr id="row_${task['_id']}" >
+        <td>${task['_id']}</td>
+        <td>${task['filename'].split('-')[1]}</td>
+        <td>
+            <span>start:&nbsp;${task['start_time'].strftime('%Y-%m-%d')}</span>
+            <br>
+            <span>end:&nbsp;${task['end_time'].strftime('%Y-%m-%d')}</span>
+        </td>
+        <td>${task['created_on'].strftime('%Y-%m-%d %H:%M')}</td>
+
+        <% from admin.config.consts import DOWNLOAD_STATUS %>
+        % if task['status'] == DOWNLOAD_STATUS.COMPLETED:
+        <td>已完成 <a href="/download/file/${task['filename']}" target='_blank'>点此下载</a></td>
+        % elif task['status'] == DOWNLOAD_STATUS.WAITING:
+            <td>等待中 </td>
+        % else:
+            <td>导出中 <td>
+        % endif
+    </tr>
+    % endfor
+    </tbody>
+</table>
+
+<div class="pagination pagination-centered">
+    <ul>
+    % for page_no, label in h.pagination(page):
+        % if page_no == page:
+            <li class="disabled"><a href="/download/index/${page_no}">${label}</a></li>
+        % elif page_no > 0:
+            <li class="active"><a href="/download/index/${page_no}">${label}</a></li>
+        % else:
+            <li class="disabled"><a href="javascript:void(0)">${label}</a></li>
+        % endif
+    % endfor
+    </ul>
+</div>
+</%def>

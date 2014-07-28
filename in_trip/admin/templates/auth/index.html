@@ -1,0 +1,309 @@
+<%inherit file="../base.html"/>
+
+<%def name="title()">
+    用户管理
+</%def>
+
+<%def name="style()">   
+    <link href="/static/css/datetimepicker.css" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="/static/css/jquery-ui.css">
+</%def>
+
+
+<%!
+from admin.config.consts import ROLE 
+from bottle import request
+s = request.environ.get('beaker.session')
+%>
+<%def name="content()">
+% if s.get('role', None) == ROLE.ROOT:
+    <div id="succeed-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作成功.</span>
+    </div>
+    <div id="error-alert-tip" class="alert fade in alert-error" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作失败.</span>
+    </div>
+
+
+    <div>
+        <form class="form-search" method="get" style="margin-bottom:15px;margin-top:10px;margin-left:auto;margin-right:auto;width:60%;">
+            <div class="input-append">
+                <input type="text" name="keyword" class="input-xlarge search-query" placeholder="邮箱" value="${keyword}">
+                <button type="submit" class="btn">Search</button>&nbsp;&nbsp;&nbsp;
+                <a href="javascript:void(0)" class="btn btn-success" id="add-user"><i class="icon-plus"></i>添加用户</a>
+            </div>
+        </form>
+    </div>
+
+    <table class="table table-hover">
+    <thead>
+    <tr>
+        <td>用户编号</td>
+        <td>用户名</td>
+        <td>权限</td>
+        <td>公司</td>
+        <td>创建日期</td>
+        <td>截止日期</td>
+        <td>操作</td>
+    </tr>
+    </thead>
+    <tbody>
+    % for record in records:
+    <tr id="row_${record._id}" >
+        <td>${record._id}</td>
+        <td>${record.mail}</td>
+
+        % if record.role == ROLE.ROOT:
+        <td>管理员</td>
+        % elif record.role == ROLE.NORMAL:
+        <td>普通用户</td>
+        % else:
+        <td>未激活</td>
+        % endif
+
+        <td>${record.company}</td>
+        <td>${record.created_on.strftime('%Y-%m-%d')}</td>
+        <td>${record.end_date.strftime('%Y-%m-%d')}</td>
+        <td>
+            <a href="javascript:void(0)" class="operation edit-btn" cls="${record._id}"><i class="icon-edit"></i></a>
+            <a href="javascript:void(0)" class="operation del-btn" cls="${record._id}"><i class="icon-remove"></i></a>
+        </td>
+    </tr>
+    % endfor
+    </tbody>
+</table>
+
+<div class="pagination pagination-centered">
+    <ul>
+    %if not keyword:
+        % for page_no, label in h.pagination(page):
+            % if page_no == page:
+                <li class="disabled"><a href="/auth/index/${page_no}">${label}</a></li>
+            % elif page_no > 0:
+                <li class="active"><a href="/auth/index/${page_no}">${label}</a></li>
+            % else:
+                <li class="disabled"><a href="javascript:void(0)">${label}</a></li>
+            % endif
+        % endfor
+    %endif
+    </ul>
+</div>
+
+
+<div id="add-modal" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>增加一个用户</h3>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal" id="add-form" action="/auth/add" method="post">
+            <div class="control-group">
+                <label class="control-label" for="mail">用户邮箱:</label>
+                <div class="controls"><input type="text" name="mail" id="mail" check-type="required" required-message="不能为空!"/></div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="password">密码:</label>
+                <div class="controls"><input type="password" name="password" id="password" check-type="required" required-message="不能为空!"/></div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="confirm">确认密码:</label>
+                <div class="controls"><input type="password" name="confirm" id="confirm" check-type="required" required-message="不能为空!"/></div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="company">公司:</label>
+                <div class="controls"><input type="text" name="company" id="company" check-type="required" required-message="不能为空!"/></div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="end_time">截止日期:</label>
+                <div class="datetimepicker-box input-append date" data-format="yyyy-mm-dd">
+                  <input type="text" class="input-large" name="end_date" check-type="required" required-message="不能为空!"/>
+                  <span class="add-on"><i class="icon-calendar"> </i> </span>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="role">权限:</label>
+                <div class="controls">
+                    <select name="role">
+                        <option value="${ROLE.NORMAL}">普通用户</option>
+                        <option value="${ROLE.ROOT}">管理员</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:void(0)" class="btn modal-close" cls="add-modal">取&nbsp;消</a>
+        <a href="javascript:void(0)" class="btn btn-primary" id="add-submit-btn">提&nbsp;交</a>
+    </div>
+</div>
+
+
+<div id="edit-modal" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>编辑用户</h3>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal" id="edit-form" action="/auth/update" method="post">
+            <input type="hidden" name="_id"/>
+            <div class="control-group">
+                <label class="control-label" for="mail">用户邮箱:</label>
+                <div class="controls"><input type="text" name="mail" id="mail" check-type="required" required-message="不能为空!"/></div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="password">密码:</label>
+                <div class="controls"><input type="password" name="password" id="password" placeholder="不修改密码则留空"/></div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="confirm">确认密码:</label>
+                <div class="controls"><input type="password" name="confirm" id="confirm" placeholder="不修改密码则留空"/></div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="company">公司:</label>
+                <div class="controls"><input type="text" name="company" id="company" check-type="required" required-message="不能为空!"/></div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="end_date">截止日期:</label>
+                <div class="datetimepicker-box input-append date" data-format="yyyy-mm-dd">
+                  <input type="text" class="input-large" name="end_date" check-type="required" required-message="不能为空!"/>
+                  <span class="add-on"><i class="icon-calendar"> </i></span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="role">权限:</label>
+                <div class="controls">
+                    <select name="role">
+                        <option value="${ROLE.NORMAL}">普通用户</option>
+                        <option value="${ROLE.ROOT}">管理员</option>
+                        <option value="${ROLE.BLOCK}">未激活</option>
+                    </select>
+                </div>
+            </div>
+
+        </form>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:void(0)" class="btn modal-close" cls="edit-modal">取&nbsp;消</a>
+        <a href="javascript:void(0)" class="btn btn-primary" id="edit-submit-btn">提&nbsp;交</a>
+    </div>
+</div>
+
+<script type="text/javascript" src="/static/js/bootstrap-datetimepicker.min.js"></script>
+<script type="text/javascript">
+    $(":input[name=keyword]").focus();
+    $(document).ready(function () {
+        $('.datetimepicker-box').datetimepicker(
+            {language: 'en',
+            autoclose: true,
+            format: 'yyyy-mm-dd',
+            minView : 2,
+            }
+        ); 
+    });
+    $("#add-user").click(function () {
+        $("#add-modal").modal('show');
+    });
+
+    $(".modal-close").click(function () {
+        var cls = $(this).attr('cls');
+        $("#" + cls).modal('hide');
+    });
+
+    $('#add-submit-btn').click(function () {
+        if(!$('#add-form').validation())
+            return false;
+        var options = {
+            type: "post",
+            url: $("#add-form").attr('action'),
+            success: function (data) {
+                if (data.status) {
+                    $('#add-form').reset();
+                    $("#add-modal").modal('hide');
+                    showTip('succeed-alert-tip')
+                    location.reload()
+                } else {
+                    $("#error-alert-tip span").text(data.msg);
+                    showTip('error-alert-tip')
+                }
+            },
+        };
+        $("#add-form").ajaxSubmit(options);
+    });
+
+
+    $('.del-btn').click(function () {
+        if (confirm("确定要删除？")) {
+            var _id = $(this).attr('cls');
+            $.post("/auth/j_delete",
+                {'_id': _id},
+                function (data) {
+                    if (data.status) {
+                        $("#row_" + _id).remove();
+                         showTip("succeed-alert-tip");
+                    } else {
+                         showTip("error-alert-tip");
+                    }
+            });
+        }
+    });
+
+
+    $('.edit-btn').click(function () {
+        var _id = $(this).attr('cls');
+        $.get("/auth/j_get_user/" + _id,
+            function (data) {
+                if (data.status) {
+                    var user = data.user;
+                    $("#edit-form :input[name=_id]").val(user._id);
+                    $("#edit-form :input[name=mail]").val(user.mail);
+                    $("#edit-form :input[name=company]").val(user.company);
+                    $("#edit-form :input[name=end_date]").val(user.end_date);
+                    $("#edit-form select[name=role]").val(user.role);
+                } else {
+                    showTip("error-alert-tip");
+                }
+            }
+        );
+        $("#edit-modal").modal('show');
+    });
+
+    $('#edit-submit-btn').click(function () {
+        if (!$('#edit-form').validation())
+            return false;
+        var _id = $('#edit-form :input[name=_id]').val();
+        var row = $("#row_" + _id);
+        var options = {
+            type: "post",
+            url: $("#edit-form").attr('action'),
+            success: function (data) {
+                if (data.status) {
+                    $("#edit-modal").modal('hide');
+                    row.children().eq(1).text($("#edit-form :input[name=mail]").val());
+                    row.children().eq(2).text($("#edit-form :input[name=role] option:selected").text());
+                    row.children().eq(3).text($("#edit-form :input[name=company]").val());
+                    row.children().eq(5).text($("#edit-form :input[name=end_date]").val());
+                    row.attr('cls', $("#edit-form :input[name=url]").val());
+                    $('#edit-form').reset();
+                    showTip('succeed-alert-tip');
+                } else {
+                    $("#error-alert-tip span").text(data.msg);
+                    showTip("error-alert-tip");
+                }
+            },
+        };
+
+        $('#edit-form').ajaxSubmit(options);
+    });
+</script>
+%else:
+<h2>无权限查看当前页面</h2>
+%endif
+</%def>

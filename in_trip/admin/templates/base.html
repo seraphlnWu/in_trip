@@ -1,0 +1,160 @@
+<% 
+from bottle import request
+%>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${self.title()}</title>
+        <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+        <link href="/static/css/bootstrap-responsive.css" rel="stylesheet">
+        <link href="/static/css/aquaadmin.css" rel="stylesheet">
+        <style type="text/css">
+            a {text-decoration:none;}
+            .controls .input-append {margin-left:0;}
+        </style>
+        ${self.style()}
+        <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+        <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+        <!-- <script type="text/javascript" src="/static/js/bootstrap-typeahead.js"></script> -->
+    </head>
+    <body>
+
+    <div class="navbar navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container-fluid">
+                    <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>
+                    <a class="brand" href="#">Social Admin</a>
+                     <div class="nav-collapse">
+                        <ul class="nav">
+                            <li class="active"><a href="/"><i class="icon-home icon-aqua"></i>BuzzMaster</a></li>
+                            <% s = request.environ.get('beaker.session') %>
+                            % if s.get('mail', None) is not None:
+                            <li><a href="#">${s['mail']}</a></li>
+                            <li><a href="javascript:void(0)" class="logout">退出</a></li>
+                            % else:
+                            <li><a href="javascript:void(0)" class="login">登录</a></li>
+                            %endif
+                        </ul>
+                    </div><!--/.nav-collapse -->
+                </div>
+            </div>
+
+        </div>
+        % if s.get('mail', None) is not None:
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div class="span2 sp2 all-left" style="margin-left:0px;">
+                    <div class="sidebar-nav">
+                        <ul class="nav nav-list">
+                            <% from admin.config.consts import ROLE %>
+                            % if s.get('role', None) == ROLE.ROOT:
+                                <li><a href="/site/index/1">网站管理</a></li>
+                                <li><a href="/feeds/index/1">种子管理</a></li>
+                                <li><a href="/channel/index/1">频道管理</a></li>
+                                <li><a href="/blacklist/index/1">黑名单管理</a></li>
+                                <li><a href="/special/index/1">特例管理</a></li>
+                                <li><a href="/auth/index/1">用户管理</a></li>
+                            %endif
+                            <li><a href="/project/index/1">项目管理</a></li>
+                            <li><a href="/topic/index/1">关键字管理</a></li>
+                            <li><a href="/download/index/1">下载管理</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="content span9">${self.content()}</div>
+            </div>
+        </div>
+        %endif
+    </body>
+</html>
+
+<div id="succeed-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <span>操作成功.</span>
+</div>
+<div id="error-alert-tip" class="alert fade in alert-error" style="display:none;margin-bottom:0px;">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <span>操作失败.</span>
+</div>
+
+<div id="login-modal" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>登录</h3>
+    </div>
+
+    <div class="modal-body">
+        <form class="form-horizontal" id="login-form" action="/auth/login" method="post">
+            <div class="control-group">
+                <label class="control-label" for="mail">用户邮箱:</label>
+                <div class="controls"><input type="text" name="mail" id="mail" check-type="required" required-message="不能为空!"/></div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="password">密码:</label>
+                <div class="controls"><input type="password" name="password" id="password" check-type="required" required-message="不能为空!"/></div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:void(0)" class="btn modal-close" cls="login-modal">取&nbsp;消</a>
+        <a href="javascript:void(0)" class="btn btn-primary" id="login-submit-btn">提&nbsp;交</a>
+    </div>
+</div>
+
+<script type="text/javascript" src="/static/js/bootstrap-validation.js"></script> 
+<script type="text/javascript" src="/static/js/jquery-ajax-submit.js"></script> 
+<script type="text/javascript" src="/static/js/jquery-utils.js"></script> 
+<script type="text/javascript">
+    $(".login").click(function () {
+        $("#login-modal").modal('show');
+    });
+
+    $(".logout").click(function () {
+        $.post("/auth/logout", function(data, status){
+            location.reload();
+        });
+    });
+
+    $(".modal-close").click(function () {
+        var cls = $(this).attr('cls');
+        $("#" + cls).modal('hide');
+    });
+
+    $('#login-submit-btn').click(function () {
+        if(!$('#login-form').validation())
+            return false;
+        var options = {
+            type: "post",
+            url: $("#login-form").attr('action'),
+            success: function (data) {
+                if (data.status) {
+                    console.log('here');
+                    $('#login-form').reset();
+                    $("#login-modal").modal('hide');
+                    showTip('succeed-alert-tip');
+                    location.reload();
+                } else {
+                    $("#error-alert-tip span").text(data.msg);
+                    showTip('error-alert-tip');
+                }
+            },
+        };
+        $("#login-form").ajaxSubmit(options);
+    });
+
+    $('#login-form').keyup(function(event){
+        if(event.keyCode ==13){
+            $("#login-submit-btn").trigger("click");
+        }
+    });
+</script>
+
+<%def name="style()">
+</%def>

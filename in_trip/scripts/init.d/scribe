@@ -1,0 +1,70 @@
+#!/bin/bash
+#example file to build /etc/init.d/ scripts.
+#        This file should be used to construct scripts for /etc/init.d.
+#
+#        Written by Miquel van Smoorenburg <miquels@cistron.nl>.
+#        Modified for Debian
+#               Modified by wangjian <wangjian@admaster.com.cn>
+#
+# chkconfig: 2345 98 98
+# description: start and stop scribe service
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+DAEMON=scribed
+NAME=scribe
+
+DAEMON_OPTS="-c /etc/scribe.conf"
+
+SCRIBE_CTRL=scribe_ctrl
+
+#which $DAEMON || exit 0
+
+# Include scribe defaults if available
+if [ -f /etc/default/scribe ] ; then
+    . /etc/default/scribe
+fi
+
+set -e
+start_scribe() 
+{
+    `which $DAEMON` $DAEMON_OPTS >/dev/null 2>&1 & # daemonize
+}
+case "$1" in
+    start)
+        echo "Starting $NAME..."
+        start_scribe;
+        ;;
+    stop)
+        echo "Stopping $NAME..."
+        $SCRIBE_CTRL stop >/dev/null 2>&1
+        ;;
+    status)
+        echo "Get $NAME status: "
+        X=`$SCRIBE_CTRL status 2>&1 ||echo ""`
+        echo "$X"
+        if [ "$X" = "ALIVE" ]; then
+            R=0
+        else
+            R=1
+        fi
+        exit $R
+        ;;
+    reload)
+        echo "Reloading $NAME configuration files."
+        $SCRIBE_CTRL reload
+          ;;
+    restart)
+        echo "Restarting $NAME..."
+        $SCRIBE_CTRL stop >/dev/null 2>&1
+        sleep 1
+        start_scribe;
+        ;;
+    *)
+        N=/etc/init.d/$NAME
+        echo "Usage: $N {start|stop|status|restart|reload}" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

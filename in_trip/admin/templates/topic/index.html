@@ -1,0 +1,352 @@
+<%inherit file="../base.html"/>
+
+<%def name="title()">
+    关键词管理
+</%def>
+
+<%def name="style()">   
+    <link href="/static/css/datetimepicker.css" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="/static/css/jquery-ui.css">
+    <link href="/static/css/jquery.tagit.css" rel="stylesheet"/>
+    <style type="text/css">
+        table {table-layout:fixed;}
+        .multi-label {width: 20%;}
+        .operation {width:5%;}
+        .tag-label {
+            display: inline-block;
+            padding: 5px 8px;
+            margin-right:4px;
+            margin-top: 3px;
+            background-color: #f6f6f6;
+            border: 1px solid #ddd;
+            -webkit-border-radius: 15px;
+            border-radius: 15px
+        }
+    </style>
+</%def>
+
+<%def name="content()">
+     <div>
+        <form class="form-search" method="get" style="margin-bottom:15px;margin-top:10px;margin-left:auto;margin-right:auto;width:60%;">
+            <div class="input-append">
+                <input type="text" name="keyword" class="input-xlarge search-query" placeholder="main keyword" value="${keyword}">
+                <button type="submit" class="btn">Search</button>&nbsp;&nbsp;&nbsp;
+                <!--<a href="javascript:void(0)" id="add-btn" class="btn btn-success"><i class="icon-plus"></i>添加</a> -->
+            </div>
+        </form>
+    </div>
+    <div id="succeed-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作成功.</span>
+    </div>
+
+    <div id="error-alert-tip" class="alert fade in alert-error" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作失败.</span>
+    </div>
+    <div id="topic-list">
+    %if topics:
+        <table class="table">
+            <tr>
+                <td>主关键词</td>
+                <td>同义词</td>
+                <td>限制关键词(and)</td>
+                <td>限制关键词(or)</td>
+                <td>排除关键词</td>
+                <td>创建时间</td>
+                <td>所属项目</td>
+                <td>操作</td>
+            </tr>
+            % for topic in topics:
+            <tr id="row-${topic['_id']}">
+                <td><span class="tag-label">${topic['main_key']}</span></td>
+                % for column in ['synonyms', 'and_keys', 'or_keys', 'not_keys']:
+                <td class="multi-label">
+                    % for tag_label in topic.get(column, []):
+                        % if isinstance(tag_label, (list, tuple)):
+                        <span class="tag-label">${';'.join(tag_label)}</span>
+                        % else:
+                        <span class="tag-label">${tag_label}</span>
+                        % endif
+                    % endfor
+                </td>
+                % endfor
+                <td style="width:15%;">${topic['created_on'].strftime('%Y-%m-%d %H:%M')}</td>
+                <td><a href="/project/index/1?keyword=${topic['project_name']}">${topic['project_name']}</a></td>
+                <td class="operation">
+                    <a href="javascript:void(0)" class="operation dump-data-btn" cls="${topic['_id']}">导数据</i></a>&nbsp;&nbsp;
+                    <%  
+                        from bottle import request
+                        from admin.config.consts import ROLE
+                        s = request.environ.get('beaker.session')
+                    %>
+                    %if s.get('role', None) == ROLE.ROOT:
+                    <a href="javascript:void(0)" class="operation show-edit-topic-modal-btn" cls="${topic['_id']}"><i class="icon-edit"></i></a>
+                    <a href="javascript:void(0)" class="operation del-topic-btn" cls="${topic['_id']}"><i class="icon-remove"></i></a>
+                    %endif
+                </td>
+            </tr>
+            % endfor
+        </table>
+    %else:
+        <p>没有结果.</p>
+    % endif
+    </div>
+    % if not project_id:
+    <div class="pagination pagination-centered">
+        <ul>
+        % if not keyword:
+          % for page_no, label in h.pagination(page):
+            % if page_no == page:
+                <li class="disabled"><a href="/topic/index/${page_no}">${label}</a></li>
+            % elif page_no > 0:
+                <li class="active"><a href="/topic/index/${page_no}">${label}</a></li>
+            % else:
+                <li class="disabled"><a href="javascript:void(0)">${label}</a></li>
+            % endif
+          % endfor
+        % endif
+        </ul>
+    </div>
+    % endif
+    <div id="edit-modal" class="modal hide fade">
+        <div class="modal-header">
+            <button type="button"  class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>编辑topic</h3>
+        </div>
+        <div class="modal-body">
+        </div>
+
+        <div class="modal-footer">
+            <a href="javascript:void(0))" class="btn modal-close">取&nbsp;消</a>
+            <a href="javascript:void(0)" class="btn btn-primary" id="submit-edit-topic-btn" cls="">提&nbsp;交</a>
+        </div>
+    </div>
+
+
+    <div id="dump-modal" class="modal hide fade">
+        <div class="modal-header">
+            <button type="button"  class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>数据导出</h3>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal" id="dump-topic-data" action="/topic/dump" method="get">
+                <div class="control-group">
+                    <label class="control-label" for="start">起止时间:</label>
+                    <div class="controls">
+                          <div class="datetimepicker-box input-append date" data-format="yyyy-mm-dd">
+                            <input type="text" class="input-large" name="start" check-type="required" required-message="不能为空!"/>
+                            <span class="add-on"><i class="icon-calendar"> </i> </span>
+                          </div>
+                          到
+                          <div class="datetimepicker-box input-append date" data-format="yyyy-mm-dd">
+                            <input type="text" class="input-large" name="end" check-type="required" required-message="不能为空!"/>
+                            <span class="add-on"> <i class="icon-calendar"> </i> </span>
+                          </div>
+                          <div><label style="display:inline-block;" for="need_comment"><input type="checkbox" name="need_comment" value="1" />导出评论</label></div>
+                    </div>
+                </div>
+                </form>
+        </div>
+
+        <div class="modal-footer">
+            <a href="javascript:void(0))" class="btn modal-close">取&nbsp;消</a>
+            <a href="javascript:void(0)" class="btn btn-primary" id="submit-dump-topic-btn" cls="">提&nbsp;交</a>
+        </div>
+    </div>
+    <script type="text/javascript" src="/static/js/bootstrap-datetimepicker.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/static/js/tag-it.js"></script> 
+    <script type="text/javascript">
+
+        $(":input[name=keyword]").focus();
+        $(document).ready(function () {
+            $('.datetimepicker-box').datetimepicker(
+                {language: 'en',
+                autoclose: true,
+                format: 'yyyy-mm-dd',
+                minView : 2,
+                }
+            ); 
+        });
+
+        $('.modal-close').click(function () {
+            $('.modal').modal('hide');
+        });
+        $(document).on('click', '.del-topic-btn', function () {
+            if (confirm('确定要删除?')) {
+                var self = $(this);
+                var topic_id = self.attr('cls');
+                $.get('/topic/delete/' + topic_id, function (data) {
+                    if (data.status) {
+                        $('#row-' + topic_id).remove();
+                        showTip('succeed-alert-tip');
+                    } else {
+                        showTip('error-alert-tip');
+                    }
+                });
+            }
+        });
+
+        $('.show-edit-topic-modal-btn').click(function () {
+            var topic_id = $(this).attr('cls');
+            $.get('/topic/get_topic/' + topic_id, function (data) {
+                if (data.status) {
+                    var topic = data.topic;
+                    var form_source = $('#edit-topic-html').html().format([topic_id, topic.main_key]);
+                    $('#edit-modal .modal-body').html(form_source);
+                    $('#edit-modal #submit-edit-topic-btn').attr('cls', 'form-' + topic_id);
+
+                    $('.keyword-input').tagit({'allowSpaces': true, 'singleFieldDelimiter': ','});
+
+                    //set form data
+                    var form_id = 'form-' + topic_id;
+                    var columns = ['synonyms', 'and_keys', 'or_keys', 'not_keys'];
+                    for (var col_i in columns) {
+                        var column = columns[col_i];
+                        console.log('#' + form_id + ' #' + column);
+                        for (var tag_i in topic[column]) {
+                            var tag_label = topic[column][tag_i];
+                            if (typeof(tag_label) == "string") {
+                                $('#' + form_id + ' #' + column).tagit('createTag', tag_label);
+                            } else {
+                                $('#' + form_id + ' #' + column).tagit('createTag', tag_label.join(';'));
+                            }
+                        }
+                    }
+
+                    $("#edit-modal").modal("show");
+                }
+            });
+        });
+
+        $("#submit-edit-topic-btn").click(function () {
+            var form_id = $(this).attr('cls');
+            if (!$('#' + form_id).validation())
+                return false;
+            var _id = $('#' + form_id +' :input[name=_id]').val()
+            var post_url = $('#' + form_id).attr('action') + '/' + _id;
+            var main_key = $("#" + form_id + " :input[name=main_key]").val().trim();
+            var synonyms = $("#" + form_id + " :input[name=synonyms]").tagit('assignedTags');
+            var and_keys = $("#" + form_id + " :input[name=and_keys]").tagit('assignedTags');
+            var or_keys = $("#" + form_id + " :input[name=or_keys]").tagit('assignedTags');
+            var not_keys = $("#" + form_id + " :input[name=not_keys]").tagit('assignedTags');
+
+            var form_data = {
+                'main_key': main_key,
+                'synonyms': synonyms,
+                'and_keys': and_keys,
+                'or_keys': or_keys,
+                'not_keys': not_keys
+            };
+
+            $.post(post_url, form_data, function (data) {
+                if (data.status) {
+                    var row = $('#row-' + _id);  
+                    row.children().eq(0).html(main_key);
+
+                    var synonyms_source = generate_source(synonyms)
+                    row.children().eq(1).html(synonyms_source);
+
+                    var and_keys_source = generate_source(and_keys)
+                    row.children().eq(2).html(and_keys_source);
+
+                    var or_keys_source = generate_source(or_keys)
+                    row.children().eq(3).html(or_keys_source);
+
+                    var not_keys_source = generate_source(not_keys)
+                    row.children().eq(4).html(not_keys_source);
+                    $('.modal').modal('hide');
+                    showTip("succeed-alert-tip");
+                } else {
+                    showTip("error-alert-tip");
+                }
+            });
+        });
+        
+        $('.dump-data-btn').click(function () {
+            $('#dump-modal').modal('show');
+            $('#dump-modal #submit-dump-topic-btn').attr('cls', $(this).attr('cls'));
+        });
+
+        $('#submit-dump-topic-btn').click(function () {
+            if (!$('#dump-topic-data').validation()) 
+                return false;
+            var cls = $(this).attr('cls');
+
+            var start = $('#dump-topic-data :input[name=start]').val();
+            var end = $('#dump-topic-data :input[name=end]').val();
+            var need_comment = $('#dump-topic-data :input[name=need_comment]').is(':checked')?1:0;
+
+            var post_url = $('#dump-topic-data').attr('action') + '/' + cls;
+            var form_data = {
+                'start': start,
+                'end': end,
+                'need_comment': need_comment
+            };
+
+            $.post(post_url, form_data, function (data) {
+                if (data.status) {
+                    $('.modal').modal('hide');
+                    showTip("succeed-alert-tip");
+                    location.href = "/download/index/1";
+                } else {
+                    showTip("error-alert-tip");
+                }
+            });
+        });
+
+        function generate_source(array_obj) {
+            var html_source = '';
+            for (var index in array_obj) {
+                html_source += '<span class="tag-label">' + array_obj[index] + '</span>'
+            }
+            return html_source;
+        }
+    </script>
+
+    <script type="text/html" id="edit-topic-html">
+        <form class="form-horizontal" class="add-topic-form" action="/topic/update" method="post" id="form-{0}">
+             <input type="hidden" name="_id" value="{0}" />
+             <div class="control-group">
+                <label for="main_key" class="control-label">主关键词:</label>
+                <div class="controls">
+                    <input type="text" name="main_key" id="main_key" check-type="required" required-message="不能为空!" value="{1}"/>
+                </div>
+            </div>
+
+             <div class="control-group">
+                <label for="synonyms" class="control-label">同义词:</label>
+                <div class="controls">
+                    <input type="text" name="synonyms" id="synonyms" class="keyword-input"/>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="and_keys" class="control-label">限定关键词(and):</label>
+                <div class="controls">
+                    <input type="text" name="and_keys" id="and_keys" class="keyword-input"/>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="and_keys" class="control-label">限定关键词(or):</label>
+                <div class="controls">
+                    <input type="text" name="or_keys" id="or_keys" class="keyword-input"/>
+                </div>
+            </div>
+            <div class="control-group">
+                <label for="not_keys" class="control-label">排除关键词:</label>
+                <div class="controls">
+                    <input type="text" name="not_keys" id="not_keys" class="keyword-input"/>
+                </div>
+            </div>
+
+        </form>
+    </script>
+
+</%def>
+
+<iframe id="topic-dump" src="" style="visibility:hidden">
+</iframe>
+

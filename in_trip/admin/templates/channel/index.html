@@ -1,0 +1,315 @@
+<%inherit file="../base.html"/>
+<%def name="title()">
+    频道管理
+</%def>
+
+<%!
+
+from json import dumps
+from datetime import datetime
+
+from buzz.lib.consts import CATEGORY
+from buzz.lib.consts import INDUSTRY 
+
+category_dict = dumps(CATEGORY)
+%>
+
+<%!
+from admin.config.consts import ROLE 
+from bottle import request
+s = request.environ.get('beaker.session')
+%>
+<%def name="content()">
+% if s.get('role', None) == ROLE.ROOT:
+    <div>
+        <form class="form-search" method="get" style="margin-bottom:15px;margin-top:10px;margin-left:auto;margin-right:auto;width:60%;">
+            <div class="input-append">
+                <input type="text" name="keyword" class="input-xlarge search-query" placeholder="url" value="${keyword}">
+                <button type="submit" class="btn">Search</button>&nbsp;&nbsp;&nbsp;
+            </div>
+        </form>
+    </div>
+    <div id="succeed-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作成功.</span>
+    </div>
+    <table class="table">
+        <thead>
+        <tr>
+            <td>Siteid</td>
+            <td>SiteName</td>
+            <td>Domain</td>
+            <td>operation</td>
+        </tr>
+        </thead>
+        <tbody>
+        % if not sites:
+            <tr>没有结果!</tr>
+        % else:
+            % for site in sites:
+                <tr class="expand" query="${query}" cls="${site['_id']}">
+                    <td>${site['_id']}</td>
+                    <td>${site['site_name']}</td>
+                    <td>${site['domain']}</td>
+                    <td>
+                    <!--    <a href="javascript:void(0)" class="operation"><i class="icon-edit"></i></a>
+                        <a href="javascript:void(0)" class="operation"><i class="icon-remove"></i></a>
+                    -->
+                        <a href="javascript:void(0)" class="operation add-btn" site="${site['_id']}"><i class="icon-plus"></i></a>
+                    </td>
+                </tr>
+                % if site['channels']:
+                    % for channel in site['channels']:
+                        <tr class="expand-${site['_id']} well" id="row-${channel['_id']}">
+                            <td>${channel['created_on'].strftime('%Y-%m-%d %H:%M')}</td>
+                            <td>${channel['channel_name']}${CATEGORY[channel['category_id']]}</td>
+                            <td><a href="//${channel['url']}" target="_blank">${channel['url']}</a></td>
+                            <td>
+                                <a href="javascript:void(0)" class="operation edit-btn" cls="${channel['_id']}"><i class="icon-edit"></i></a>
+                                <a href="javascript:void(0)" class="operation del-btn" cls="${channel['_id']}"><i class="icon-remove"></i></a>
+                            </td>
+                        </tr>
+                    % endfor
+                % endif
+            % endfor
+        %endif
+    </table>
+
+    % if not keyword:
+        <div class="pagination pagination-centered">
+            <ul>
+            % for page_no, label in h.pagination(page):
+                % if page_no == page:
+                    <li class="disabled"><a href="/channel/index/${page_no}">${label}</a></li>
+                % elif page_no > 0:
+                    <li class="active"><a href="/channel/index/${page_no}">${label}</a></li>
+                % else:
+                    <li class="disabled"><a href="javascript:void(0)">${label}</a></li>
+                % endif
+            % endfor
+            </ul>
+        </div>
+    % endif
+
+    <div id="modal-form" class="modal hide fade">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>频道管理</h3>
+        </div>
+        <div class="modal-body">
+            <div id="error-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <span>操作失败.</span>
+            </div>
+
+            <form class="form-horizontal" id="add-form" method="post">
+                <input type="hidden" name="site_id"/>
+                <input type="hidden" name="_id"/>
+                <div class="control-group">
+                    <label class="control-label" for="url">频道URL:</label>
+                    <div class="controls"><input type="text" name="url" id="url" check-type="required" required-message="不能为空!" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="channel_name">频道名称:</label>
+                    <div class="controls"><input type="text" name="channel_name" id="channel_nametitle" check-type="required" required-message="不能为空!" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="url_reg">频道类型:</label>
+                    <div class="controls">
+                        <select name="category_id" id="category_id">
+                            %for category_id, category in CATEGORY.iteritems():
+                            %if isinstance(category_id, int) and category_id>0:
+                                <option value="${category_id}">${category}</option>
+                                %endif
+                            %endfor
+                        </select>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="ind">所属行业:</label>
+                    <div class="controls">
+                        <select name="industry_id" id="industry_id">
+                            %for industry_id, industry in INDUSTRY.iteritems():
+                                %if isinstance(industry_id, int):
+                                <option value="${industry_id}">${industry}</option>
+                                %endif
+                            %endfor
+                        </select>
+                    </div>
+                </div>
+            </form>
+
+        <div id="regex-error-tip" class="alert fade in alert-error" style="display:none;margin-bottom:0px;">
+            <span>正则不匹配.</span>
+        </div>
+
+        </div>
+        <div class="modal-footer">
+            <a href="javascript:void(0))" class="btn modal-close" cls="modal-form">取&nbsp;消</a>
+            <a href="javascript:void(0)" class="btn btn-primary" id="submit-btn">提&nbsp;交</a>
+        </div>
+    </div>
+    <script type="text/javascript">
+        var category_dict = ${category_dict|n}
+        var EDIT = false;
+        $(":input[name=keyword]").focus();
+        $('.add-btn').click(function (e){
+            e.stopPropagation()
+            EDIT = false;
+            $(":input[name=site_id]").val($(this).attr('site'));
+            $("#modal-form").modal("show");
+        });
+
+        $(document).on('click', '.edit-btn', function (){
+            EDIT = true;
+            var cls = $(this).attr('cls');
+            $(":input[name=_id]").val(cls);
+            $.get("/channel/j_get_channel", {'_id': cls}, function (data) {
+                if (data.status) {
+                    var form_data = data.data;
+                    $(":input[name=url]").val(form_data.url);
+                    $(":input[name=channel_name]").val(form_data.channel_name);
+                    $("#industry_id").val(form_data.industry_id);
+                    $("#category_id").val(form_data.category_id);
+                    $("#modal-form").modal("show");
+                } else {
+                    showTip("error-alert-tip");
+                }
+             });
+        });
+
+        $(".modal-close").click(function () {
+            var cls = $(this).attr('cls');
+            $("#" + cls).modal('hide');
+            $('#add-form').reset();
+        });
+
+        function check_regex() {
+            var regex = $(":input[name=url_reg]").val();
+            var url = $(":input[name=url]").val();
+            var match = url.match(regex);
+            if (match) {
+                return true;
+            } else {
+                showTip('regex-error-tip');
+                return false;
+            }
+        }
+
+        $('#submit-btn').click(function () {
+            if (!$('#add-form').validation() || !check_regex())
+                return false;
+            if (EDIT) {
+                var options = {
+                    type: "post",
+                    url: "/channel/update",
+                    success: function (data) {
+                        if (data.status) {
+                            $("#modal-form").modal('hide');
+                            var row =  $("#row-" + $(":input[name=_id]").val());
+                            row.children().eq(2).text($(":input[name=url_reg]").val());
+                            row.children().eq(1).text($(":input[name=channel_name]").val());
+                            $('#add-form').reset();
+                            showTip("succeed-alert-tip");
+                            location.reload()
+                        } else {
+                            showTip("error-alert-tip");
+                        }
+                    },
+                };
+            } else {
+                var options = {
+                    type: "post",
+                    url: "/channel/add",
+                    success: function (data) {
+                        if (data.status) {
+                            $('#add-form').reset();
+                            $("#modal-form").modal('hide');
+                            showTip("succeed-alert-tip");
+                        } else {
+                            showTip("error-alert-tip");
+                        }
+                    },
+                };
+            }
+            $("#add-form").ajaxSubmit(options);
+        });
+
+        $('.expand').click(function (e) {
+            e.preventDefault();
+            var self = $(this);
+            var cls = self.attr('cls');
+            var query = self.attr('query');
+            if (query == 'false') {
+                $.get("/channel/j_get_channels",
+                    {'site_id': cls},
+                    function (data) {
+                        for (index in data) {
+                            var row = data[index];
+                            var tr = document.createElement('tr');
+                            tr.setAttribute('class', "expand-" + cls + " well");
+                            tr.setAttribute('id', "row-" + row._id);
+                            var td1 = document.createElement('td');
+                            td1.innerText = row.created_on;
+                            tr.appendChild(td1)
+                            var td2 = document.createElement('td');
+                            td2.innerText = row.channel_name+category_dict[row.category_id];
+                            tr.appendChild(td2);
+
+                            var td3 = document.createElement('td');
+                            var channel_url = document.createElement('a');
+                            channel_url.href = "//" + row.url;
+                            channel_url.target = "_blank";
+                            channel_url.innerText = row.url;
+                            td3.appendChild(channel_url);
+                            tr.appendChild(td3);
+
+                            var td4 = document.createElement('td');
+                            //edit btn 
+                            var a = document.createElement('a');
+                            a.href = "javascript:void(0)";
+                            a.setAttribute('class', "operation edit-btn");
+                            a.setAttribute('cls', row._id);
+                            var i = document.createElement('i');
+                            i.setAttribute('class', 'icon-edit');
+                            a.appendChild(i);
+                            td4.appendChild(a);
+                            //del btn
+                            var a = document.createElement('a');
+                            a.href = "javascript:void(0)";
+                            a.setAttribute('class', "operation del-btn");
+                            a.setAttribute('cls', row._id);
+                            var i = document.createElement('i');
+                            i.setAttribute('class', 'icon-remove');
+                            a.appendChild(i);
+                            td4.appendChild(a);
+
+                            tr.appendChild(td4);
+                            $(tr).insertAfter(self);
+                        };
+                        self.attr('query', 'true');
+                    }
+                );
+            }
+            $('.expand-' + cls).toggle();
+        });
+
+        $(document).on('click', '.del-btn', function () {
+                if (confirm('确认要删除')) {
+                var self = $(this);
+                var cls = self.attr('cls');
+                $.get('/channel/j_delete', {'_id': cls}, function (data) {
+                    if (data.status) {
+                        showTip('succeed-alert-tip');                        
+                        $('#row-' + cls).remove()
+                    } else {
+                        showTip('error-alert-tip');                        
+                    }
+                });
+            }
+        });
+    </script>
+%else:
+<h2>无权限查看当前页面</h2>
+%endif
+</%def>

@@ -1,0 +1,13 @@
+redis
+jieba
+gevent
+chardet
+hiredis
+happybase
+lxml==3.2.1
+cssselect
+tldextract==1.3
+setproctitle
+msgpack-python
+mysql-python==1.2.4
+pymongo >=pymongo-2.4

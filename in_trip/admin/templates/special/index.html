@@ -1,0 +1,347 @@
+<%inherit file="../base.html"/>
+<%def name="title()">
+    特例管理
+</%def>
+
+<%!
+from admin.config.consts import ROLE 
+from bottle import request
+s = request.environ.get('beaker.session')
+%>
+<%def name="content()">
+% if s.get('role', None) == ROLE.ROOT:
+    <div>
+        <form class="form-search" method="get" style="margin-bottom:15px;margin-top:10px;margin-left:auto;margin-right:auto;width:60%;">
+            <div class="input-append">
+                <input type="text" name="keyword" class="input-xlarge search-query" placeholder="url" value="${keyword}">
+                <button type="submit" class="btn">Search</button>&nbsp;&nbsp;&nbsp;
+            </div>
+        </form>
+    </div>
+    <div id="succeed-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作成功.</span>
+    </div>
+    <table class="table">
+        <thead>
+        <tr>
+            <td>Siteid</td>
+            <td>SiteName</td>
+            <td>Domain</td>
+            <td>operation</td>
+        </tr>
+        </thead>
+        <tbody>
+        % if not sites:
+            <tr>没有结果!</tr>
+        % else:
+            % for site in sites:
+                <tr class="expand" query="${query}" cls="${site['_id']}">
+                    <td>${site['_id']}</td>
+                    <td>${site['site_name']}</td>
+                    <td>${site['domain']}</td>
+                    <td>
+                    <!--    <a href="javascript:void(0)" class="operation"><i class="icon-edit"></i></a>
+                        <a href="javascript:void(0)" class="operation"><i class="icon-remove"></i></a>
+                    -->
+                        <a href="javascript:void(0)" class="operation add-btn" site="${site['_id']}"><i class="icon-plus"></i></a>
+                    </td>
+                </tr>
+                % if site['special']:
+                    % for special in site['special']:
+                        <tr class="expand-${special['site_id']} well" id="row-${special['id']}">
+                            <td></td>
+                            <td>${special['url']}</td>
+                            <td>${special['url_regex']}</td>
+                            <td>
+                                <a href="javascript:void(0)" class="operation edit-btn" cls="${special['id']}"><i class="icon-edit"></i></a>
+                                <a href="javascript:void(0)" class="operation del-btn" cls="${special['id']}"><i class="icon-remove"></i></a>
+                            </td>
+                        </tr>
+                    % endfor
+                % endif
+            % endfor
+        %endif
+    </table>
+
+    % if not keyword:
+        <div class="pagination pagination-centered">
+            <ul>
+            % for page_no, label in h.pagination(page):
+                % if page_no == page:
+                    <li class="disabled"><a href="/special/index/${page_no}">${label}</a></li>
+                % elif page_no > 0:
+                    <li class="active"><a href="/special/index/${page_no}">${label}</a></li>
+                % else:
+                    <li class="disabled"><a href="javascript:void(0)">${label}</a></li>
+                % endif
+            % endfor
+            </ul>
+        </div>
+    % endif
+
+    <div id="modal-form" class="modal hide fade">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>特例管理</h3>
+        </div>
+        <div class="modal-body">
+            <div id="error-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <span>正则与 url 不匹配.</span>
+            </div>
+
+            <form class="form-horizontal" id="add-form" method="post">
+                <input type="hidden" name="site_id"/>
+                <input type="hidden" name="_id"/>
+                <div class="control-group">
+                    <label class="control-label" for="url">URL:</label>
+                    <div class="controls"><input type="text" name="url" id="url" check-type="required" required-message="不能为空!" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="url_regex">URL正则:</label>
+                    <div class="controls"><input type="text" name="url_regex" id="url_regex" check-type="required" required-message="不能为空!" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="page_type">页面类型:</label>
+                    <div class="controls">
+                        <select name="page_type">
+                            <% from buzz.lib.consts import PAGE_TYPE %>
+                            <option value="${PAGE_TYPE.NORMAL_DETAIL_PAGE}">普通详情页</option>
+                            <option value="${PAGE_TYPE.BBS_DETAIL_PAGE}">BBS 详情页</option>
+                            <option value="${PAGE_TYPE.ASK_DETAIL_PAGE}">问答详情页</option>
+                            <option value="${PAGE_TYPE.BBS_INDEX_PAGE}">BBS 索引页</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="bbs_blocks">bbs_blocks:</label>
+                    <div class="controls"><input type="text" name="bbs_blocks" id="bbs_blocks" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="title">标题 xpath:</label>
+                    <div class="controls"><input type="text" name="title" id="title" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="content">正文 xpath:</label>
+                    <div class="controls"><input type="text" name="content" id="content" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="pub_date">时间 xpath:</label>
+                    <div class="controls"><input type="text" name="pub_date" id="pub_date" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="pub_date_regex">时间正则:</label>
+                    <div class="controls"><input type="text" name="pub_date_regex" id="pub_date_regex" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="author">作者 xpath:</label>
+                    <div class="controls"><input type="text" name="author" id="author" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="author_regex">作者正则:</label>
+                    <div class="controls"><input type="text" name="author_regex" id="author_regex" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="view_count">浏览数 xpath:</label>
+                    <div class="controls"><input type="text" name="view_count" id="view_count" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="view_count_regex">浏览数正则:</label>
+                    <div class="controls"><input type="text" name="view_count_regex" id="view_count_regex" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="comment_count">评论数 xpath:</label>
+                    <div class="controls"><input type="text" name="comment_count" id="comment_count" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="comment_count_regex">评论数正则:</label>
+                    <div class="controls"><input type="text" name="comment_count_regex" id="comment_count_regex" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="main_block">main_block:</label>
+                    <div class="controls"><input type="text" name="main_block" id="main_block" class="input-xlarge"/></div>
+                </div>
+            </form>
+
+        <div id="regex-error-tip" class="alert fade in alert-error" style="display:none;margin-bottom:0px;">
+            <span>正则不匹配.</span>
+        </div>
+
+        </div>
+        <div class="modal-footer">
+            <a href="javascript:void(0)" class="btn modal-close" cls="modal-form">取&nbsp;消</a>
+            <a href="javascript:void(0)" class="btn btn-primary" id="submit-btn">提&nbsp;交</a>
+        </div>
+    </div>
+    <script type="text/javascript">
+        var EDIT = false;
+        $(":input[name=keyword]").focus();
+        $('.add-btn').click(function (e){
+            e.stopPropagation()
+            EDIT = false;
+            $(":input[name=site_id]").val($(this).attr('site'));
+            $("#modal-form").modal("show");
+        });
+
+        $(document).on('click', '.edit-btn', function (){
+            EDIT = true;
+            var cls = $(this).attr('cls');
+            $(":input[name=_id]").val(cls);
+            $.get("/special/j_get_special", {'_id': cls}, function (data) {
+                if (data.status) {
+                    var form_data = data.data;
+                    $(":input[name=url]").val(form_data.url);
+                    $(":input[name=url_regex]").val(form_data.url_regex);
+                    $(":input[name=main_block]").val(form_data.main_block);
+                    $(":input[name=bbs_blocks]").val(form_data.bbs_blocks);
+                    $(":input[name=title]").val(form_data.title);
+                    $(":input[name=content]").val(form_data.content);
+                    $(":input[name=pub_date]").val(form_data.pub_date);
+                    $(":input[name=pub_date_regex]").val(form_data.pub_date_regex);
+                    $(":input[name=author]").val(form_data.author);
+                    $(":input[name=author_regex]").val(form_data.author_regex);
+                    $(":input[name=view_count]").val(form_data.view_count);
+                    $(":input[name=view_count_regex]").val(form_data.view_count_regex);
+                    $(":input[name=comment_count]").val(form_data.comment_count);
+                    $(":input[name=comment_count_regex]").val(form_data.comment_count_regex);
+                    $("select[name=page_type]").val(form_data.page_type);
+                    $("#modal-form").modal("show");
+                } else {
+                    showTip("error-alert-tip");
+                }
+             });
+        });
+
+        $(".modal-close").click(function () {
+            var cls = $(this).attr('cls');
+            $("#" + cls).modal('hide');
+            $('#add-form').reset();
+        });
+
+        <!-- function check_regex() { -->
+        <!--     var regex = $(":input[name=url_regex]").val(); -->
+        <!--     var url = $(":input[name=url]").val(); -->
+        <!--     var match = url.match(regex); -->
+        <!--     if (match) { -->
+        <!--         return true; -->
+        <!--     } else { -->
+        <!--         showTip('regex-error-tip'); -->
+        <!--         return false; -->
+        <!--     } -->
+        <!-- } -->
+
+        $('#submit-btn').click(function () {
+            if (!$('#add-form').validation())
+                return false;
+            var url = $(":input[name=url]").val();
+            var url_regex = $(":input[name=url_regex]").val();
+            
+            if (EDIT) {
+                var options = {
+                    type: "post",
+                    url: "/special/update",
+                    success: function (data) {
+                        if (data.status) {
+                            $("#modal-form").modal('hide');
+                            var row =  $("#row-" + $(":input[name=_id]").val());
+                            row.children().eq(1).text(url);
+                            row.children().eq(2).text(url_regex);
+                            $('add-form').reset();
+                            location.reload(true);
+                            showTip("succeed-alert-tip");
+                        } else {
+                            showTip("error-alert-tip");
+                        }
+                    },
+                };
+            } else {
+                var options = {
+                    type: "post",
+                    url: "/special/add",
+                    success: function (data) {
+                        if (data.status) {
+                            $('#add-form').reset();
+                            $("#modal-form").modal('hide');
+                            showTip("succeed-alert-tip");
+                        } else {
+                            showTip("error-alert-tip");
+                        }
+                    },
+                };
+            }
+            $("#add-form").ajaxSubmit(options);
+        });
+
+        $('.expand').click(function (e) {
+            e.preventDefault();
+            var self = $(this);
+            var cls = self.attr('cls');
+            var query = self.attr('query');
+            if (query == 'false') {
+                $.get("/special/j_get_speciallist",
+                    {'site_id': cls},
+                    function (data) {
+                        for (index in data) {
+                            var row = data[index];
+                            var tr = document.createElement('tr');
+                            tr.setAttribute('class', "expand-" + cls + " well");
+                            tr.setAttribute('id', "row-" + row._id);
+                            var td1 = document.createElement('td');
+                            tr.appendChild(td1)
+                            var td2 = document.createElement('td');
+                            td2.innerText = row.url;
+                            tr.appendChild(td2);
+                            var td3 = document.createElement('td');
+                            td3.innerText = row.url_regex;
+                            tr.appendChild(td3);
+
+                            var td4 = document.createElement('td');
+                            //edit btn 
+                            var a = document.createElement('a');
+                            a.href = "javascript:void(0)";
+                            a.setAttribute('class', "operation edit-btn");
+                            a.setAttribute('cls', row._id);
+                            var i = document.createElement('i');
+                            i.setAttribute('class', 'icon-edit');
+                            a.appendChild(i);
+                            td4.appendChild(a);
+                            //del btn
+                            var a = document.createElement('a');
+                            a.href = "javascript:void(0)";
+                            a.setAttribute('class', "operation del-btn");
+                            a.setAttribute('cls', row._id);
+                            var i = document.createElement('i');
+                            i.setAttribute('class', 'icon-remove');
+                            a.appendChild(i);
+                            td4.appendChild(a);
+
+                            tr.appendChild(td4);
+                            $(tr).insertAfter(self);
+                        };
+                        self.attr('query', 'true');
+                    }
+                );
+            }
+            $('.expand-' + cls).toggle();
+        });
+
+        $(document).on('click', '.del-btn', function () {
+                if (confirm('确认要删除')) {
+                var self = $(this);
+                var cls = self.attr('cls');
+                $.get('/special/j_delete', {'_id': cls}, function (data) {
+                    if (data.status) {
+                        showTip('succeed-alert-tip');                        
+                        $('#row-' + cls).remove()
+                    } else {
+                        showTip('error-alert-tip');                        
+                    }
+                });
+            }
+        });
+    </script>
+%else:
+<h2>无权限查看当前页面</h2>
+%endif
+</%def>

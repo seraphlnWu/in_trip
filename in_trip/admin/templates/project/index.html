@@ -1,0 +1,919 @@
+<%inherit file="../base.html"/>
+<%!
+from datetime import datetime
+from buzz.lib.consts import INDUSTRY
+from json import dumps
+industry_li = dumps(INDUSTRY)
+industries = [(ind_id, ind) for ind_id, ind in INDUSTRY.iteritems() if isinstance(ind_id, int)]
+%>
+
+<%def name="title()">
+    项目管理
+</%def>
+
+<%def name="style()">
+    <link href="/static/css/datetimepicker.css" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="/static/css/jquery-ui.css">
+    <link href="/static/css/jquery.tagit.css" rel="stylesheet"/>
+    <style type="text/css">
+        .controls .datetimepicker {margin-left:0px;}
+        .delimiter {border-top: 1px dotted;padding-top:5px;padding-bottom:5px;clear:both;margin-top:15px;}
+        .form-horizontal .control-group {margin-bottom:8px;}
+        .tag-label {
+            display: inline-block;
+            padding: 5px 8px;
+            margin-right:4px;
+            background-color: #f6f6f6;
+            border: 1px solid #ddd;
+            -webkit-border-radius: 15px;
+            border-radius: 15px
+        }
+        .modal-body p {clear:both;}
+        .topic-detial {clear:both;width:460px;}
+        .topic-detail .column {clear:both;padding-top:3px;padding-bottom:3px;}
+        .topic-detail .column .column-label {width:110px;margin:0px;text-align:right;float:left;} 
+        .topic-detail .column .tag-list {width:340px;float:left;margin-left:10px;}
+    </style>
+</%def>
+
+<%def name="content()">
+    <div>
+        <form class="form-search" method="get" style="margin-bottom:15px;margin-top:10px;margin-left:auto;margin-right:auto;width:60%;">
+            <div class="input-append">
+                <input type="text" name="keyword" class="input-xlarge search-query" placeholder="项目名称" value="${keyword}">
+                <button type="submit" class="btn">Search</button>&nbsp;&nbsp;&nbsp;
+                <%  
+                    from bottle import request
+                    from admin.config.consts import ROLE
+                    s = request.environ.get('beaker.session')
+                %>
+                %if s.get('role', None) == ROLE.ROOT:
+                <a href="javascript:void(0)" id="add-btn" class="btn btn-success"><i class="icon-plus"></i>添加项目</a>
+                %endif
+            </div>
+        </form>
+    </div>
+
+    <div id="succeed-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作成功.</span>
+    </div>
+
+    <div id="error-alert-tip" class="alert fade in alert-error" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作失败.</span>
+    </div>
+
+% if not projects:
+    <p>没有了.</p>
+% else:
+    <div id="project_list">
+        <table class="table table-hover" id="project-list">
+            <thead>            
+            <tr>
+                <td>项目编号</td>
+                <td>项目名称</td>
+                <td>行业</td>
+                %if s.get('role', None) == ROLE.ROOT:
+                <td>关联用户</td>
+                %endif
+                <td>有效时间</td>
+                <td>创建时间</td>
+                <td>关键词个数</td>
+                <td>操作</td>
+            </tr>
+            </thead>
+
+        % for project in projects:
+        <div class="project_detail">
+            <tr id="row-${project['_id']}">
+                <td>${project['_id']}</td>
+                <td>${project['name']}</td>
+                <td>${INDUSTRY[project['industry_id']]}</td>
+                %if s.get('role', None) == ROLE.ROOT:
+                <td>${project['mail']}</td>
+                %endif
+                <td>
+                    %if str(project['effective_time'][0]).find('-')<0:
+                        <span>start: ${datetime.fromtimestamp(project['effective_time'][0]).strftime('%Y-%m-%d')}</span><br/>
+                    %else:
+                        <span>start: ${project['effective_time'][0]}</span><br/>
+                    %endif
+                    %if str(project['effective_time'][1]).find('-')<0:
+                        <span>end : ${datetime.fromtimestamp(project['effective_time'][1]).strftime('%Y-%m-%d')}</span>
+                    %else:
+                        <span>end : ${project['effective_time'][1]}</span>
+                    %endif
+                </td>
+                <td>${project['created_on'].strftime('%Y-%m-%d %H:%M')}</td>
+                <td><a href="/topic/index/1?project_id=${project['_id']}" target="_blank">(${len(project['topic_ids'])})</a></td>
+                <td>
+                    <a href="javascript:void(0)" class="operation dump-data-btn" cls="${project['_id']}">导数据</i></a>&nbsp;&nbsp;
+                    %if s.get('role', None) == ROLE.ROOT:
+                    <a href="javascript:void(0)" class="operation show-add-topic-modal" cls="${project['_id']}" title="添加关键字"><i class="icon-plus"></i></a>
+                    <a href="javascript:void(0)" class="operation show-edit-project-modal-btn" cls="${project['_id']}" title="编辑"><i class="icon-edit"></i></a>
+                    <a href="javascript:void(0)" class="operation del-project-btn" cls="${project['_id']}" title="删除"><i class="icon-remove"></i></a>
+                    %endif
+                </td>
+            </tr>
+        </div>
+        % endfor
+        </table>
+    </div>
+
+% endif
+
+<div class="pagination pagination-centered">
+    <ul>
+      % if not keyword:
+        % for page_no, label in h.pagination(page):
+          % if page_no == page:
+            <li class="disabled"><a href="/project/index/${page_no}">${label}</a></li>
+          % elif page_no > 0:
+            <li class="active"><a href="/project/index/${page_no}">${label}</a></li>
+          % else:
+            <li class="disabled"><a href="javascript:void(0)">${label}</a></li>
+          % endif
+       % endfor
+     % endif
+    </ul>
+</div>
+
+    <div id="add-modal" class="modal hide fade">
+        <div class="modal-header">
+            <button type="button"  class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>添加项目</h3>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal" id="add-project-form" action="/project/add" method="post">
+                <input type="hidden" name="topic_ids"/>
+                <div class="control-group">
+                    <label for="name" class="control-label">项目名称:</label>
+                    <div class="controls">
+                        <input type="text" name="name" id="name" check-type="required" required-message="不能为空!" class="input-large">
+                     </div>
+                </div>
+                <div class="control-group">
+                    <label for="user" class="control-label">关联用户:</label>
+                    <div class="controls">
+                        <input type="text" name="mail" id="mail" check-type="required" required-message="不能为空!" class="input-large">
+                     </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="industry">行业:</label>
+                    <div class="controls">
+                        <select name="industry" id="industry">
+                          % for ind_id, ind in industries:
+                            <option value="${ind_id}">${ind}</option>
+                          % endfor
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label" for="start">起止时间:</label>
+                    <div class="controls">
+                          <div class="datetimepicker-box input-append date" data-format="yyyy-mm-dd">
+                            <input type="text" class="input-large" name="start" check-type="required" required-message="不能为空!"/>
+                            <span class="add-on"> <i class="icon-calendar"> </i> </span>
+                          </div>
+                          到
+                          <div class="datetimepicker-box input-append date" data-format="yyyy-mm-dd">
+                            <input type="text" class="input-large" name="end" check-type="required" required-message="不能为空!"/>
+                            <span class="add-on"> <i class="icon-calendar"> </i> </span>
+                          </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="white_list" class="control-label">白名单:</label>
+                    <div class="controls">
+                        <textarea name="white_list" id="white_list"></textarea>&nbsp;&nbsp; 
+                        <label style="display:inline-block;"><input type="checkbox" name="regex" value="1"/> 正则?</label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="black_list" class="control-label">黑名单:</label>
+                    <div class="controls">
+                        <textarea name="black_list" id="black_list"></textarea>
+                    </div>
+                </div>
+
+            </form>
+            <p><a href="javascript:void(0)" class="add-topic">添加关键字</a></p>
+        </div>
+
+        <div class="modal-footer">
+            <a href="javascript:void(0))" class="btn modal-close">取&nbsp;消</a>
+            <a href="javascript:void(0)" class="btn btn-primary" id="add-project-btn">提&nbsp;交</a>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="modal hide fade">
+        <div class="modal-header">
+            <button type="button"  class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>编辑项目</h3>
+        </div>
+        <div class="modal-body">
+        </div>
+
+        <div class="modal-footer">
+            <a href="javascript:void(0))" class="btn modal-close">取&nbsp;消</a>
+            <a href="javascript:void(0)" class="btn btn-primary" id="submit-edit-project-btn">提&nbsp;交</a>
+        </div>
+    </div>
+
+
+    <div id="dump-modal" class="modal hide fade">
+        <div class="modal-header">
+            <button type="button"  class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>数据导出</h3>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal" id="dump-project-data" action="/project/dump" method="get">
+                <div class="control-group">
+                    <label class="control-label" for="start">起止时间:</label>
+                    <div class="controls">
+                          <div class="datetimepicker-box input-append date" data-format="yyyy-mm-dd">
+                            <input type="text" class="input-large" name="start" check-type="required" required-message="不能为空!"/>
+                            <span class="add-on"><i class="icon-calendar"> </i> </span>
+                          </div>
+                          到
+                          <div class="datetimepicker-box input-append date" data-format="yyyy-mm-dd">
+                            <input type="text" class="input-large" name="end" check-type="required" required-message="不能为空!"/>
+                            <span class="add-on"> <i class="icon-calendar"> </i> </span>
+                          </div>
+                          <div><label style="display:inline-block;" for="need_comment"><input type="checkbox" name="need_comment" value="1"/>导出评论</label></div>
+                    </div>
+                </div>
+                </form>
+        </div>
+        <div class="modal-footer">
+            <a href="javascript:void(0))" class="btn modal-close">取&nbsp;消</a>
+            <a href="javascript:void(0)" class="btn btn-primary" id="submit-dump-project-btn" cls="">提&nbsp;交</a>
+        </div>
+    </div>
+
+    <div class="modal hide fade" id="add-topic-modal">
+        <div class="modal-header">
+            <button type="button"  class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>增加关键词</h3>
+        </div>
+        <div class="modal-body">
+        </div>
+
+        <div class="modal-footer">
+            <a href="javascript:void(0))" class="btn modal-close">取&nbsp;消</a>
+            <a href="javascript:void(0)" class="btn btn-primary" id="submit-add-topic-new-btn">提&nbsp;交</a>
+        </div>
+    </div>
+         
+    <script type="text/javascript" src="/static/js/bootstrap-datetimepicker.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/static/js/tag-it.js"></script> 
+    <script type="text/javascript" src="/static/js/spin.min.js"></script> 
+    <script type="text/javascript" src="/static/js/jquery.spin.js"></script> 
+    <script type="text/javascript">
+        var INDUSTRY = ${industry_li|n};
+        var INDEX = 0;
+        $(":input[name=keyword]").focus();
+        $('#add-btn').click(function () {
+            $("#add-modal").modal("show");
+        });
+
+        $('.modal-close').click(function () {
+            $('.modal').modal('hide');
+            reset_add_project_modal();
+        });
+
+        //$(document).ready(function () {
+        $('.datetimepicker-box').datetimepicker(
+            {language: 'en',
+            autoclose: true,
+            format: 'yyyy-mm-dd',
+            minView : 2,
+            }
+        ); 
+        //});
+        
+        $('#add-project-btn').click(function () {
+            var submit_form = $('#add-project-form');
+            if (!submit_form.validation())
+                return false;
+            var options = {
+                type: 'post',
+                url: $('#add-project-form').attr('action'), 
+                success: function (data) {
+                    if (data.status) {
+                        showTip('succeed-alert-tip');
+                        $('.modal').modal('hide');
+
+                        var project_name = $('#add-project-form :input[name=name]').val(); 
+                        var industry = $('#add-project-form :input[name=industry]').val(); 
+                        var start = $('#add-project-form :input[name=start]').val(); 
+                        var end = $('#add-project-form :input[name=end]').val(); 
+                        var mail = $('#add-project-form :input[name=mail]').val(); 
+                        var topic_ids = $('#add-project-form :input[name=topic_ids]').val().split(' '); 
+                        var count = 0;
+                        for (var topic_index in topic_ids) {
+                            var element = topic_ids[topic_index];
+                            if (element != '' && element != " ")
+                                count += 1
+                        }
+                        var row_source = $('#project-row-html').html().format([data._id, project_name, INDUSTRY[industry], mail, start, end, (new Date()).format("yyyy-MM-dd hh:mm"), count]);
+                        $("#project-list tbody").prepend(row_source);
+
+                        //reset form
+                        submit_form.reset();
+                        reset_add_project_modal();
+                    } else {
+                        $("#error-alert-tip span").text(data.msg);
+                        showTip('error-alert-tip');
+                    }
+                }            
+            };
+            
+            submit_form.ajaxSubmit(options);
+        });
+
+        $(document).on('click', '.add-topic', function () {
+            var html_source = $('#add-topic-html').html().trim().format([INDEX, ]);
+            $($(this).parent()).before(html_source);
+            $('.keyword-input').tagit({'allowSpaces': true, 'singleFieldDelimiter': ','});
+            INDEX++;
+        });
+
+        $(document).on('click', '.submit-topic-btn', function () {
+            var form_id = $(this).attr('cls');
+            if (!$('#' + form_id).validation())
+                return false;
+            //var topic_id = 1;
+            var main_key = $("#" + form_id + " :input[name=main_key]").val().trim();
+            var synonyms = $("#" + form_id + " :input[name=synonyms]").tagit('assignedTags');
+            var and_keys = $("#" + form_id + " :input[name=and_keys]").tagit('assignedTags');
+            var or_keys = $("#" + form_id + " :input[name=or_keys]").tagit('assignedTags');
+            var not_keys = $("#" + form_id + " :input[name=not_keys]").tagit('assignedTags');
+            var _id = $('#' + form_id +' :input[name=_id]').val()
+            var form_data = {
+                'main_key': main_key,
+                'synonyms': synonyms,
+                'and_keys': and_keys,
+                'or_keys': or_keys,
+                'not_keys': not_keys
+            }
+            var post_url = "/topic/add";
+            if (_id != undefined) {
+                post_url = '/topic/update/' + _id;
+            }
+
+            var project_form = $("#" + form_id).parent().parent().children('form');
+            if (project_form.attr('id') == 'edit-project-form') {
+                form_data['project_id'] = project_form.children(" :input[name=project_id]").val();
+            }
+            $.post(post_url, form_data, function (data) {
+                if (data.status) {
+                    $('#detail-' + form_id).remove();
+                    var div = document.createElement('div');
+                    div.className = "topic-detail";
+                    div.setAttribute('id', "detail-" + form_id);
+                    var main_div = generate_column('main-key', '主关键词:', [main_key, ]);
+                    if (main_div != null)
+                        div.appendChild(main_div);
+
+                    var synonyms_div = generate_column('synonyms', '同义词:', synonyms);
+                    if (synonyms_div != null)
+                        div.appendChild(synonyms_div);
+
+                    var and_div = generate_column('and_keys', '限定关键词(and):', and_keys);
+                    if (and_div != null)
+                        div.appendChild(and_div);
+
+                    var or_div = generate_column('or_keys', '限定关键词(or):', or_keys);
+                    if (or_div != null)
+                        div.appendChild(or_div);
+
+                    var not_div = generate_column('not_keys', '排除关键词:', not_keys);
+                    if (not_div != null)
+                        div.appendChild(not_div);
+
+                    var edit_btn = document.createElement('a');
+                    edit_btn.href = "javascript:void(0)";
+                    edit_btn.className = "edit-topic-btn";
+                    edit_btn.innerText = "编辑";
+                    edit_btn.setAttribute('cls', form_id);
+                    div.appendChild(edit_btn);
+
+                    var del_btn = document.createElement('a');
+                    del_btn.href = "javascript:void(0)";
+                    del_btn.className = "del-topic-btn";
+                    del_btn.innerHTML = "&nbsp;&nbsp;删除";
+                    del_btn.setAttribute('cls', form_id);
+                    del_btn.setAttribute('topic_id', data._id);
+                    div.appendChild(del_btn);
+
+                    var self = $("#" + form_id);
+                    if (_id == undefined) {
+                        self.prepend('<input type="hidden" name="_id" value="' + data._id + '"/>');
+                    }
+                    self.before(div);
+
+                    //set project associate topic id
+
+                    var project_form_id = self.parent().parent().children('form').attr('id');
+                    var topic_ids = $("#" + project_form_id + " :input[name=topic_ids]").val();
+                    $("#" + project_form_id + " :input[name=topic_ids]").val(topic_ids + " " + data._id)
+
+                    self.hide();
+                } else {
+                    showTip("error-alert-tip");
+                }
+            });
+        });
+    
+        $(document).on('click', '.del-project-btn', function () {
+            if (confirm('确定要删除?')) {
+                var project_id = $(this).attr('cls');
+                $.get('/project/delete/' + project_id, function (data) {
+                    if (data.status) {
+                        $('#row-' + project_id).remove();
+                        showTip('succeed-alert-tip');
+                    } else {
+                        showTip('error-alert-tip');
+                    }
+                });
+            }
+        });
+
+        $(document).on('click', '.del-topic-btn', function () {
+            var self = $(this);
+            var form_id = self.attr('cls');
+            var topic_id = self.attr('topic_id');
+            $.get('/topic/delete/' + topic_id, function (data) {
+                if (data.status) {
+                    // remove topic_id from topic_ids
+                    var project_form_id = $('#detail-' + form_id).parent().parent().children('form').attr('id');
+                    var topic_ids = $('#' + project_form_id + ' :input[name=topic_ids]').val();
+                    $('#' + project_form_id + ' :input[name=topic_ids]').val(topic_ids.replace(new RegExp('\\s*' + topic_id.trim() + '($|\\s)', 'g'), ' '))
+    
+                    $('#detail-' + form_id).parent().remove();
+                    showTip('succeed-alert-tip');
+                } else {
+                    showTip('error-alert-tip');
+                }
+            });
+        });
+
+        $(document).on('click', '.cancel-add-topic-btn', function () {
+            var cls = $(this).attr('cls');
+            if ($('#detail-' + cls).size() > 0) {
+                $('#' + cls).hide();
+                $('#detail-' + cls).show();
+                //TODO:reset_form
+                //var self = $('#detail-' + cls);
+                var main_key = $('#detail-' + cls + ' #column-main-key .tag-label').text();
+                $("#main_key").val(main_key);
+                var columns = ['synonyms', 'and_keys', 'or_keys', 'not_keys'];
+                for (var index=0;index<columns.length;index++) {
+                    var tags = [];
+                    $('#detail-' + cls + ' #column-' + columns[index] + ' .tag-label').each(function () {
+                        tags.push($(this).text());
+                    });
+                    $("#" + columns[index]).tagit('removeAll');
+                    for (var i = 0;i<tags.length;i++) {
+                        //alert(tags[i]);
+                        $('#' + columns[index]).tagit('createTag', tags[i]);
+                    }
+                }
+
+            } else {
+                $('#' + cls).parent().remove();
+            }
+        });
+
+        $(document).on('click', '.edit-topic-btn', function () {
+            var cls = $(this).attr('cls');
+            $('#' + cls).show();
+            $('#detail-' + cls).hide();
+        });
+
+
+        $(document).on('click', '.show-edit-project-modal-btn', function () {
+            var topic_id = $(this).attr('cls');
+            $('body').spin();
+            $.get('/project/get_project/' + topic_id, function (data) {
+                if (data.status) {
+                    var project = data.project;
+                    var topics = data.topics;
+                    $('#edit-modal .modal-body').html('');
+                    var edit_project_html = $('#edit-project-html').html().format([
+                        project._id,
+                        project.topic_ids.join(' '), 
+                        project.name, 
+                        project.mail, 
+                        (new Date(project.effective_time[0] * 1000)).format("yyyy-MM-dd"), 
+                        (new Date(project.effective_time[1] * 1000)).format("yyyy-MM-dd"), 
+                        project.white_list.join('\r\n'), 
+                        project.black_list.join('\r\n')]
+                    );
+
+                    $('#edit-modal .modal-body').html(edit_project_html);
+
+                    $('.datetimepicker-box').datetimepicker(
+                        {language: 'en',
+                        autoclose: true,
+                        format: 'yyyy-mm-dd',
+                        minView : 2,
+                        }
+                    ); 
+
+                    $('#edit-project-form #industry').val(project.industry_id);
+                    if (project.regex != 0) {
+                        $('#edit-project-form :input[name=regex]').attr('checked', true);
+                    }
+                    /*
+                    for (var index in topics) {
+                        var form_id = "form-" + INDEX;
+                        topic = topics[index];
+                        var topic_html = $('#add-topic-html').html().format([INDEX, ]);
+                        $('#edit-modal .add-topic').parent().before(topic_html);
+                        $('.keyword-input').tagit({'allowSpaces': true, 'singleFieldDelimiter': ';'});
+
+                        //set form value
+                        $('#' + form_id + ' :input[name=main_key]').val(topic.main_key);
+                        $('#' + form_id).append('<input type="hidden" name="_id" value="' + topic._id + '"/>')
+                        var columns = ['synonyms', 'and_keys', 'or_keys', 'not_keys'];
+                        for (var col_i in columns) {
+                            var column = columns[col_i];
+                            //console.log('#' + form_id + ' #' + column);
+                            for (var tag_i in topic[column]) {
+                                var tag_label = topic[column][tag_i];
+                                //console.log(tag_label);
+                                $('#' + form_id + ' #' + column).tagit('createTag', tag_label);
+                            }
+                        }
+
+                        $('#' + form_id).hide();
+                        
+                        var div = document.createElement('div');
+                        div.className = "topic-detail";
+                        div.setAttribute('id', "detail-" + form_id);
+                        var main_div = generate_column('main-key', '主关键词:', [topic.main_key, ]);
+                        div.appendChild(main_div); 
+                        var synonyms_div = generate_column('synonyms', '同义词:', topic.synonyms);
+                        if (synonyms_div != null)
+                            div.appendChild(synonyms_div);
+
+                        var and_div = generate_column('and_keys', '限定关键词(and):', topic.and_keys);
+                        if (and_div != null)
+                            div.appendChild(and_div);
+
+                        var or_div = generate_column('or_keys', '限定关键词(or):', topic.or_keys);
+                        if (or_div != null)
+                            div.appendChild(or_div);
+
+                        var not_div = generate_column('not_keys', '排除关键词:', topic.not_keys);
+                        if (not_div != null)
+                            div.appendChild(not_div);
+
+                        var edit_btn = document.createElement('a');
+                        edit_btn.href = "javascript:void(0)";
+                        edit_btn.className = "edit-topic-btn";
+                        edit_btn.innerText = "编辑";
+                        edit_btn.setAttribute('cls', form_id);
+                        div.appendChild(edit_btn);
+
+                        var del_btn = document.createElement('a');
+                        del_btn.href = "javascript:void(0)";
+                        del_btn.className = "del-topic-btn";
+                        del_btn.innerHTML = "&nbsp;&nbsp;删除";
+                        del_btn.setAttribute('cls', form_id);
+                        del_btn.setAttribute('topic_id', topic._id);
+                        div.appendChild(del_btn);
+                        $('#form-' + INDEX).before(div);
+                        INDEX++; 
+                    }
+                    */
+                    $('body').spin(false);
+                    $('#edit-modal').modal('show');
+                } else {
+                    showTip('error-alert-tip');
+                }
+            });
+        });
+        
+        $(document).on('click', '#submit-edit-project-btn', function () {
+            var update_form = $('#edit-project-form');
+            if (!update_form.validation())
+                return false;
+            var project_id = $('#edit-project-form :input[name=project_id]').val();
+            var options = {
+                type: 'post',
+                url: update_form.attr('action') + '/' + project_id,
+                success: function (data) {
+                    if (data.status) {
+
+                        var project_name = $('#edit-project-form :input[name=name]').val(); 
+                        var industry = $('#edit-project-form :input[name=industry]').val(); 
+                        var start = $('#edit-project-form :input[name=start]').val(); 
+                        var end = $('#edit-project-form :input[name=end]').val(); 
+                        var mail = $('#edit-project-form :input[name=mail]').val(); 
+                        var row = $('#row-' + project_id);
+                        row.children().eq(0).text(project_name);
+                        row.children().eq(1).text(INDUSTRY[industry]);
+                        row.children().eq(2).text(mail);
+                        row.children().eq(3).html('start:' + start + '<br/>' + 'end :' + end);
+
+                        showTip('succeed-alert-tip');
+                        $('.modal').modal('hide');
+
+                    } else {
+                        $("#error-alert-tip span").text(data.msg);
+                        showTip('error-alert-tip');
+                    }
+
+                }
+            };
+            update_form.ajaxSubmit(options);
+        });
+
+        $(document).on('click', '.show-add-topic-modal', function () {
+            var project_id = $(this).attr('cls');
+            var form_source = $('#add-topic-modal-form').html().format([project_id, ]);
+            $("#add-topic-modal .modal-body").html(form_source);
+            $('.keyword-input').tagit({'allowSpaces': true, 'singleFieldDelimiter': ';'});
+            $("#add-topic-modal").modal('show');
+        });
+
+        $('#submit-add-topic-new-btn').click(function () {
+            var form_id = "add-topic-new";
+            if (!$('#' + form_id).validation())
+                return false;
+            var main_key = $("#" + form_id + " :input[name=main_key]").val().trim();
+            var synonyms = $("#" + form_id + " :input[name=synonyms]").tagit('assignedTags');
+            var and_keys = $("#" + form_id + " :input[name=and_keys]").tagit('assignedTags');
+            var or_keys = $("#" + form_id + " :input[name=or_keys]").tagit('assignedTags');
+            var not_keys = $("#" + form_id + " :input[name=not_keys]").tagit('assignedTags');
+            var project_id = $("#" + form_id + " :input[name=project_id]").val();
+            $.post('/topic/add', 
+                {
+                "main_key": main_key,
+                "synonyms": synonyms,
+                "and_keys": and_keys,
+                "or_keys": or_keys,
+                "not_keys": not_keys,
+                "project_id": project_id,
+                }, function (data) {
+                    if (data.status) {
+                        showTip("succeed-alert-tip");
+                        $("#add-topic-modal").modal('hide');
+                        var row = $('#row-' + project_id);
+                        var count_text = row.children().eq(4).children('a').text().trim();
+                        var count = parseInt(count_text.slice(1, count_text.length)) + 1;
+                        row.children().eq(4).children('a').text('(' + count + ')');
+                    } else {
+                        showTip("error-alert-tip");
+                    }
+                });
+        });
+
+        function generate_column(column_name, column_label, values) {
+            if (values.length <= 0)
+                return null;
+            var div_child = document.createElement('div');
+            div_child.className = "column";
+            div_child.id = 'column-' + column_name;
+            var div_left = document.createElement('div');
+            div_left.className = 'column-label';
+            div_left.innerText = column_label;
+            div_child.appendChild(div_left);
+            var div_right = document.createElement('div');
+            div_right.className = "tag-list";
+            for (var i = 0; i < values.length; i++ ) {
+                var labels = values[i];
+                if (typeof(labels) != 'string') {
+                    labels = labels.join(',');
+                }
+                if (labels.trim().length <= 0)
+                    continue
+                var span = document.createElement('span');
+                span.className = 'tag-label' ;
+                span.innerText = labels;
+                div_right.appendChild(span);
+            }
+            div_child.appendChild(div_right);
+            return div_child;
+        }
+
+        function reset_add_project_modal() {
+            var form = $('#add-project-form');
+            form.children(':input[name=topic_ids]').remove();
+            form.parent().children('.delimiter').remove();
+            $('.help-inline').remove();
+            $('.control-group').removeClass('error');
+        }
+
+        $(document).on('click', '.dump-data-btn', function () {
+            $('#dump-modal').modal('show');
+            $('#dump-modal #submit-dump-project-btn').attr('cls', $(this).attr('cls'));
+        });
+
+        $('#submit-dump-project-btn').click(function () {
+            if (!$('#dump-project-data').validation()) 
+                return false;
+            var cls = $(this).attr('cls');
+
+            var start = $('#dump-project-data :input[name=start]').val();
+            var end = $('#dump-project-data :input[name=end]').val();
+            var need_comment = $('#dump-project-data :input[name=need_comment]').is(':checked')?1:0;
+
+            var post_url = $('#dump-project-data').attr('action') + '/' + cls;
+            var form_data = {
+                'start': start,
+                'end': end,
+                'need_comment': need_comment
+            };
+
+            $.post(post_url, form_data, function (data) {
+                if (data.status) {
+                    $('.modal').modal('hide');
+                    showTip("succeed-alert-tip");
+                    location.href = "/download/index/1";
+                } else {
+                    showTip("error-alert-tip");
+                }
+            });
+        });
+
+    </script>
+
+    <script type="text/html" id="add-topic-modal-form">
+        <form class="form-horizontal" action="/topic/add" method="post" id="add-topic-new">
+            <input type="hidden" name="project_id" value="{0}"/>
+             <div class="control-group">
+                <label for="main_key" class="control-label">主关键词:</label>
+                <div class="controls">
+                    <input type="text" name="main_key" id="main_key" check-type="required" required-message="不能为空!"/>
+                </div>
+            </div>
+
+             <div class="control-group">
+                <label for="synonyms" class="control-label">同义词:</label>
+                <div class="controls">
+                    <input type="text" name="synonyms" id="synonyms" class="keyword-input"/>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="and_keys" class="control-label">限定关键词(and):</label>
+                <div class="controls">
+                    <input type="text" name="and_keys" id="and_keys" class="keyword-input"/>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="and_keys" class="control-label">限定关键词(or):</label>
+                <div class="controls">
+                    <input type="text" name="or_keys" id="or_keys" class="keyword-input"/>
+                </div>
+            </div>
+            <div class="control-group">
+                <label for="not_keys" class="control-label">排除关键词:</label>
+                <div class="controls">
+                    <input type="text" name="not_keys" id="not_keys" class="keyword-input"/>
+                </div>
+            </div>
+
+        </form>
+    </script>
+
+    <script type="text/html" id="add-topic-html">
+        <div class="delimiter">
+            <form class="form-horizontal" class="add-topic-form" id="form-{0}" action="/topic/add" method="post">
+                 <div class="control-group">
+                    <label for="main_key" class="control-label">主关键词:</label>
+                    <div class="controls">
+                        <input type="text" name="main_key" id="main_key" check-type="required" required-message="不能为空!"/>
+                    </div>
+                </div>
+
+                 <div class="control-group">
+                    <label for="synonyms" class="control-label">同义词:</label>
+                    <div class="controls">
+                        <input type="text" name="synonyms" id="synonyms" class="keyword-input"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="and_keys" class="control-label">限定关键词(and):</label>
+                    <div class="controls">
+                        <input type="text" name="and_keys" id="and_keys" class="keyword-input"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="and_keys" class="control-label">限定关键词(or):</label>
+                    <div class="controls">
+                        <input type="text" name="or_keys" id="or_keys" class="keyword-input"/>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="not_keys" class="control-label">排除关键词:</label>
+                    <div class="controls">
+                        <input type="text" name="not_keys" id="not_keys" class="keyword-input"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <a href="javascript:void(0)" class="btn submit-topic-btn" style="width:35px;float:right;margin-right:150px;" cls="form-{0}">完成</a>    
+                    <a href="javascript:void(0)" class="btn cancel-add-topic-btn" style="width:35px;float:right;margin-right:5px;" cls="form-{0}">取消</a>    
+                </div>
+            </form>
+        </div>
+    </script>
+
+    <script type="text/html" id="project-row-html">
+        <tr cls="{0}">
+            <td>{1}</td>
+            <td>{2}</td>
+            <td>{3}</td>
+            <td>
+                <span>start: {4}</span><br/>
+                <span>end : {5}</span>
+            </td>
+            <td>{6}</td>
+            <td><a href="/topic/index/1?project_id={0}" target="_blank">({7})</a></td>
+            <td>
+                <a href="javascript:void(0)" class="operation dump-data-btn" cls="${0}">导数据</i></a>&nbsp;&nbsp;
+                <a href="javascript:void(0)" class="operation show-add-topic-modal" cls="{0}" title="添加关键字"><i class="icon-plus"></i></a>
+                <a href="javascript:void(0)" class="operation show-edit-project-modal-btn" cls="{0}"><i class="icon-edit"></i></a>
+                <a href="javascript:void(0)" class="operation del-project-btn" cls="{0}" title="删除"><i class="icon-remove"></i></a>
+            </td>
+        </tr>
+    </script>
+
+    <script type="text/html" id="edit-project-html">
+        <form class="form-horizontal" id="edit-project-form" action="/project/update" method="post">
+            <input type="hidden" name="project_id" value="{0}"/>
+            <input type="hidden" name="topic_ids" value="{1}"/>
+            <div class="control-group">
+                <label for="name" class="control-label">项目名称:</label>
+                <div class="controls">
+                    <input type="text" name="name" id="name" check-type="required" required-message="不能为空!" class="input-large" value="{2}">
+                 </div>
+            </div>
+
+            <div class="control-group">
+                <label for="mail" class="control-label">关联用户:</label>
+                <div class="controls">
+                    <input type="text" name="mail" id="mail" check-type="required" required-message="不能为空!" class="input-large" value="{3}">
+                 </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="industry">行业:</label>
+                <div class="controls">
+                    <select name="industry" id="industry">
+                          % for ind_id, ind in industries:
+                            <option value="${ind_id}">${ind}</option>
+                          % endfor
+                    </select>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label class="control-label" for="start">起止时间:</label>
+                <div class="controls">
+                      <div class="datetimepicker-box input-append date" data-format="yyyy-mm-dd">
+                          <input type="text" class="input-large" name="start" check-type="required" required-message="不能为空!" value="{4}"/>
+                        <span class="add-on"> <i class="icon-calendar"> </i> </span>
+                      </div>
+                      到
+                      <div class="datetimepicker-box input-append date" data-format="yyyy-mm-dd">
+                        <input type="text" class="input-large" name="end" check-type="required" required-message="不能为空!" value="{5}"/>
+                        <span class="add-on"> <i class="icon-calendar"> </i> </span>
+                      </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="white_list" class="control-label">白名单:</label>
+                <div class="controls">
+                    <textarea name="white_list" id="white_list">{6}</textarea>&nbsp;&nbsp; 
+                    <label style="display:inline-block;"><input type="checkbox" name="regex" value="1"/> 正则?</label>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="black_list" class="control-label">黑名单:</label>
+                <div class="controls">
+                    <textarea name="black_list" id="black_list">{7}</textarea>
+                </div>
+            </div>
+
+        </form>
+        <!--<p><a href="javascript:void(0)" class="add-topic">添加关键字</a></p>-->
+    </script>
+</%def>
+
+

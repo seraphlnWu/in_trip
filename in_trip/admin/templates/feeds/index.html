@@ -1,0 +1,379 @@
+<%inherit file="../base.html"/>
+<%!
+from json import dumps
+from buzz.lib.consts import INDUSTRY
+industry_li = dumps(INDUSTRY)
+industries = [(ind_id, ind) for ind_id, ind in INDUSTRY.iteritems() if isinstance(ind_id, int)]
+%>
+
+<%def name="title()">
+    种子管理
+</%def>
+
+<%def name="style()">
+    <style type="text/css">
+        .detail {display:none;}
+    </style>
+</%def>
+
+<%!
+from admin.config.consts import ROLE 
+from bottle import request
+s = request.environ.get('beaker.session')
+%>
+<%def name="content()">
+% if s.get('role', None) == ROLE.ROOT:
+    <div id="succeed-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作成功.</span>
+    </div>
+    <div id="error-alert-tip" class="alert fade in alert-alert" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作失败.</span>
+    </div>
+    <div>
+        <form class="form-search" method="get" style="margin-bottom:15px;margin-top:10px;margin-left:auto;margin-right:auto;width:60%;">
+            <div class="input-append">
+                    <input type="text" id="keyword" name="keyword" class="input-xlarge search-query" placeholder="feed id or domain or select industry" value="${keyword}"/>
+                    <div class="dropdown" style="display:inline-block;">
+                    <a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret" style="margin-top:12px;"></span></a>
+                        <ul class="dropdown-menu">
+                        % for ind_id, ind in industries:
+                            <li><a class="dropdown-menu-item" cls="${ind}" href="javascript:void(0)">${ind}</a></li>
+                        % endfor
+                        </ul>
+                    </div>
+                    <button type="submit" class="btn">Search</button>&nbsp;&nbsp;&nbsp;
+                  <a href="javascript:void(0)" id="add-btn" class="btn btn-success"><i class="icon-plus"></i>添加</a>
+            </div>
+        </form>
+    </div>
+
+    <table class="table table-hover" style="table-layout:fixed;">
+    <thead>
+    <tr>
+        <td>Feed ID</td>
+        <!-- <td>优先级</td> -->
+        <td>行业</td>
+        <td>添加时间</td>
+        <td>描述</td>
+        <td>操作</td>
+    </tr>
+    </thead>
+    <tbody>
+    % for feed in feeds:
+    <tr id="row-${feed._id}" cls="${feed._id}" class="expand">
+        <td>${feed._id}</td>
+        <td>${','.join([INDUSTRY[id] for id in feed.industry_id])}</td>
+        <td>${feed.created_on.strftime('%Y-%m-%d %H:%M')}</td>
+        <td>${feed.describe}</td>
+        <td>
+          <a href="javascript:void(0)" class="operation edit-btn" cls="${feed._id}"><i class="icon-edit"></i></a>
+          % if feed.status:
+          <a href="javascript:void(0)" class="operation op-btn" cls="${feed._id}"><i class="icon-play"></i></a>
+          %else:
+          <a href="javascript:void(0)" class="operation op-btn" cls="${feed._id}"><i class="icon-pause"></i></a>
+          %endif
+        </td>
+    </tr>
+    <tr class="detail expand-${feed._id}">
+            <td>url: </td>
+            <td colspan="4">${','.join(feed.url_rule)}</td>
+    </tr>
+    % if feed.kwargs:
+    % for field_name,field_value in feed.kwargs.items():
+    <tr class="detail expand-${feed._id}">
+      <td>字段名:</td>
+      <td>${field_name}</td>
+      <td>字段值:</td>
+      <td colspan="2">${field_value}</td>
+    </tr>
+    % endfor
+    % endif
+    % endfor
+    </tbody>
+  </table>
+
+<div class="pagination pagination-centered">
+    <ul>
+      % if not keyword:
+        % for page_no, label in h.pagination(page):
+          % if page_no == page:
+            <li class="disabled"><a href="/feeds/index/${page_no}">${label}</a></li>
+          % elif page_no > 0:
+            <li class="active"><a href="/feeds/index/${page_no}">${label}</a></li>
+          % else:
+            <li class="disabled"><a href="javascript:void(0)">${label}</a></li>
+          % endif
+       % endfor
+     % endif
+    </ul>
+</div>
+
+</div>
+ 
+<div id="add-modal" class="modal hide fade ">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>增加一个feed</h3>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal" id="add-form" action="/feeds/add" method="post">
+            <div class="control-group">
+                <div class="controls"><input type="hidden" name="_id" id="_id"/></div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="url_rule">feed URL:</label>
+                <div class="controls">
+                    <textarea id="url_rule" name="url_rule" check-type="required" required-message="不能为空!"> </textarea>
+                    <p><a href="javascript:void(0)" class="add-input" prefix="field" index="0">添加字段</a></p>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="charset">字段值编码:</label>
+                <div class="controls"><input type="text" name="charset" id="charset" placeholder='可以不填，默认为 utf-8' required-message="可以不填,默认为utf-8"/></div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="feed_type">类型:</label>
+                <div class="controls">
+                       <select name="feed_type" id="feed_type">
+                         <option value="${feed_type.NORMAL_FEED_PAGE}">索引</option>
+                         <option value="${feed_type.SEATCH_FEED_PAGE}">搜索</option>
+                       </select>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label" for="prior_level">网站优先级:</label>
+                <div class="controls">
+                    <select name="prior_level">
+                        <option value="5">5</option>
+                        <option value="3" selected>3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                    </select>
+                </div>
+            </div>
+
+             <!-- <div class="control-group">
+                <label for="uptime" class="control-label">uptime:</label>
+                <div class="controls">
+                    <input type="text" name="uptime" id="uptime" value="300">
+                </div>
+            </div> -->
+
+            <div class="control-group">
+                <label class="control-label" for="industry">行业:</label>
+                <div class="controls">
+                       <select name="industry" id="industry" multiple="multiple">
+                          % for ind_id, ind in industries:
+                            <option value="${ind_id}">${ind}</option>
+                          % endfor
+                       </select>
+                </div>
+            </div>
+        <div class="control-group">
+             <label class="control-label" for="describe">描述:</label>
+             <div class="controls"><textarea id="describe" name="describe" placeholder="feeds功能描述"></textarea>
+        </div>
+        </form>
+        <div class="control-group">
+             <label class="control-label" for="describe">测试链接:</label>
+             <div class="controls">
+                <a id="test-link" href="" target="_blank"></a>
+             </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="javascript:void(0)" class="btn modal-close" cls="add-modal">取&nbsp;消</a>
+        <a href="javascript:void(0)" class="btn btn-primary" id="test-btn">测&nbsp;试</a>
+        <a href="javascript:void(0)" class="btn" id="add-submit-btn">提&nbsp;交</a>
+    </div>
+</div>
+
+<script type="text/html" id="input-control">
+    <div class="control-group">
+        <div class="contorls">
+            <span class="help-inline">字段名:</span>
+            <input type="text" name="{0}{1}_name" id="{0}{1}_name" class="input-mini"/>
+            <span class="help-inline">字段值:</span>
+            <input type="text" name="{0}{1}_value" id="{0}{1}_value" class="input-small"/>
+            <a href="javascript:void(0)" class="operation field-del" cls=""><i class="icon-remove"></i></a>
+        </div>
+    </div>
+</script>
+
+<script type="text/javascript">
+    var INDUSTRY = ${industry_li|n};
+    var EDIT = false;
+    $(":input[name=keyword]").focus();
+    $(".dropdown-menu-item").click(function () {
+        $(":input[name=keyword]").val($(this).attr('cls'));
+    });
+    $('.add-input').click(function () {
+            var self = $(this);
+            var prefix = self.attr('prefix');
+            var index = parseInt(self.attr('index')) + 1;
+            var html_source = $("#input-control").html().format([prefix, index-1]);
+            var inr = $(self.parent()).before(html_source).prev();
+            inr.find('.field-del').click(function(e){
+                  e.stopPropagation();
+                  $(this).parent().parent().remove();
+                  var index = parseInt($(".add-input").attr("index"))+1
+                  $(".add-input").attr("index",parseInt(index)-1)
+                  var tmp_elem = $("#add-form :input[name^=field]")
+                  for (var i = 0;i < index ; i++)
+                  {
+                    tmp_elem.eq(2*i).attr("name","filed"+i+"_name")
+                    tmp_elem.eq(2*i).attr("id","filed"+i+"_name")
+                    tmp_elem.eq(2*i+1).attr("name","filed"+i+"_value")
+                    tmp_elem.eq(2*i+1).attr("id","filed"+i+"_value")
+                  }
+                });
+            self.attr('index', index)
+        });
+
+
+    $("#add-btn").click(function () {
+        EDIT = false;
+        $("#add-form").reset()
+        $("#add-modal").modal('show');
+    });
+
+    $(".modal-close").click(function () {
+        var cls = $(this).attr('cls');
+        $("#" + cls).modal('hide');
+    });
+
+    $('#add-submit-btn').click(function () {
+        var _id = $('#add-form :input[name=_id]').val();
+        $("#add-form :input[name=_id]").attr('disabled', false);
+        if(!$('#add-form').validation())
+            return false;
+        if (!EDIT) {
+            var options = {
+                type: "post",
+                url: $("#add-form").attr('action'),
+                success: function () {
+                    $('#add-form').reset();
+                    $("#add-modal").modal('hide');
+                    showTip('succeed-alert-tip');
+                    location.reload()
+                }
+            };
+        } else {
+            var row = $("#row-" + _id);
+            var options = {
+                type: "post",
+                url: "/feeds/update",
+                success: function (data) {
+                    $("add-form").reset();
+                    $("#add-modal").modal('hide');
+                    // row.children().eq(1).text($("#add-form select[name=prior_level]").val());
+                    var industrys = [];
+                    var industry_ids = $("#add-form select[name=industry]").val();
+                    for (var index in industry_ids) {
+                        var industry_id = industry_ids[index];
+                        industrys[index] = INDUSTRY[industry_id];
+                    }
+                    row.children().eq(1).text(industrys.join(','));
+                    row.children().eq(3).text($("#add-form textarea#describe").val());
+                    showTip('succeed-alert-tip');
+                    //location.reload()
+                    $("#test-link").attr('href', "");
+                    $("#test-link").text("");
+                },
+            };
+        }
+        $("#add-form").ajaxSubmit(options);
+    });
+
+    $(".op-btn").click(function (e) {
+      e.stopPropagation();
+      var _id = $(this).attr('cls');
+      if ($(this).find('i').attr('class') == "icon-play"){
+        $(this).find('i').attr('class','icon-pause')
+      }else{
+        $(this).find('i').attr('class','icon-play')
+      }
+
+        $.get("/feeds/j_op",
+            {'_id': _id},
+            function (data) {
+            });
+        });
+
+    $(".edit-btn").click(function (e) {
+        e.stopPropagation();
+        EDIT = true;
+        var _id = $(this).attr('cls');
+        $("#add-form :input[name^=field]").parent().parent().remove();
+        $(".add-input").attr("index",0);
+        $.get('/feeds/j_get_feed', {'_id': _id}, function (result) {
+            if (result.status) {
+                var data = result.data;
+                $("#add-form :input[name=_id]").val(_id);
+                $("#add-form :input[name=_id]").attr('disabled', true);
+                $("#add-form :input[name=url_rule]").val(data.url_rule.join('\r\n'));
+                // $("#add-form :input[name=delay]").val(data.delay);
+                $("#add-form :input[name=prior_level]").val(data.prior_level);
+                // $("#add-form select[name=handler]").val(data.handler);
+                // $("#add-form :input[name=uptime]").val(data.uptime);
+                $("#add-form select[name=feed_type]").val(data.feed_type);
+                $("#add-form :input[name=charset]").val(data.charset);
+                var i = 0;
+                for (key in  data.kwargs)
+                {
+                  $(".add-input").click();
+                  $("#add-form :input[name=field"+i+"_name]").val(key);
+                  $("#add-form :input[name=field"+i+"_value]").val(data.kwargs[key]);
+                  i++;
+                }
+                $("#add-form select[name=feed_type]").find("option[value="+data.feed_type+"]").attr("selected",true);
+
+                $("#add-form select[name=industry]").val([]);
+                for (var i=0;i<data.industry_id.length;i++)
+                {
+                 $("#add-form select[name=industry]").find("option[value="+data.industry_id[i]+"]").attr("selected",true);
+                }
+
+                $("textarea[name=describe]").val(data.describe)
+                $("#add-modal").modal('show');
+            }else{
+                $("#error-alert-tip span").text(result.msg);
+                showTip('error-alert-tip');
+            }
+        });
+    });
+
+
+    $('.expand').click(function () {
+        var cls = $(this).attr('cls');
+        $('.expand-' + cls).toggle();
+    });
+
+    $('#test-btn').click(function () {
+        $("#add-form :input[name=_id]").attr('disabled', false);
+        var options = {
+            type: "post",
+            url: "/feeds/j_test_feed",
+            success: function (data) {
+                if (data.status) {
+                    var result = data.data;
+                    $("#test-link").attr('href', result);
+                    $("#test-link").text("测试链接");
+                } else {
+                    $("#test-link").attr('href', "#");
+                    $("#test-link").text(data.msg);
+                }
+                $("#add-form :input[name=_id]").attr('disabled', true);
+            }
+        };
+        $("#add-form").ajaxSubmit(options);
+    });
+  </script>
+%else:
+<h2>无权限查看当前页面</h2>
+%endif
+</%def>

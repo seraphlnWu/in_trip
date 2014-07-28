@@ -1,0 +1,53 @@
+#!/bin/bash
+# init.d file used to manage extractor servie
+# Written by wangjian <wangjian@admaster.com.cn> 
+#
+
+base_path=/home/operation/buzzMaster
+export PYTHONPATH=$base_path
+PIDFILE=$base_path/extractor.pid
+
+DAEMON=/usr/local/bin/extractor
+PROC_NAME="master: extractor"
+DESC="extractor"
+
+#if [ ! -e "$PIDFILE" ]; then
+#    echo "Pid file $PIDFILE not exist."
+#fi
+
+case "$1" in
+  start)
+       echo "Starting $DESC ... "
+       $DAEMON 
+       ;;
+  stop)
+       echo "Stopping $DESC ..."
+       killall -s QUIT "$PROC_NAME" 
+       ;;
+  status)  
+       echo -n "Getting $DESC status ..."
+       if [ $(pgrep -f "$PROC_NAME"|wc -l) -gt 0 ]; then
+           echo "Alive"
+           exit 0
+       else
+           echo "Dead"
+           exit 1
+       fi
+       ;;
+  reload)
+       echo "Reloading $DESC configuration files."
+       killall -s HUP "$PROC_NAME"
+       ;;
+  restart)
+       echo "Restarting $DESC ..."
+       killall -s QUIT "$PROC_NAME"
+       sleep 2
+       $DAEMON
+       ;;
+  *)
+       N=/etc/init.d/$1
+       echo "Usage: $N {start|stop|status|restart|reload} > &2"
+       exit 1
+       ;;
+esac
+exit 0

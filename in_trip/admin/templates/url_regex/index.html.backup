@@ -1,0 +1,158 @@
+<%inherit file="../base.html"/>
+<%def name="title()">
+    正则管理
+</%def>
+
+<%def name="style()">
+    <style type="text/css">
+        .fixed-td {width:80%;}
+        .form-detail {width:220px;clear:both;}
+        .popover-content {padding:5px;}
+        form {margin:0px;}
+        .form-horizontal .control-label {width:50px;}
+        .form-horizontal .controls {margin-left:60px;}
+        .form-horizontal .control-group {margin-bottom:3px;}
+    </style>
+</%def>
+<%def name="content()">
+    <div>
+        <form class="form-search" method="get" style="margin-bottom:15px;margin-top:10px;margin-left:auto;margin-right:auto;width:60%;">
+            <div class="input-append">
+                <input type="text" name="keyword" class="input-xlarge search-query" placeholder="url" value="${keyword}">
+                <button type="submit" class="btn">Search</button>
+            </div>
+        </form>
+    </div>
+    % if site:
+    <div id="site-info">
+        <p>${site['site_name']}:${site['domain']}</p>
+    </div>
+    <div id="regex-section">
+    % if not regex_xpaths:
+        <p>该网站还没有配置xpath.</p>
+    % else:
+        % for key, xpaths in regex_xpaths.iteritems():
+            % if key == 'no_match':
+                <p>未匹配得列表<a href="javascript:viod(0)">添加正则</a></p>
+            % else:
+                <p>
+                <%
+                    keys = key.split(',')
+                %>
+                % if len(keys) > 1:
+                    % for regex in keys: 
+                    <a href="javascript:void(0)" cls="${url_regexs[regex]['_id']}" class="edit-regex-btn" show="show">${regex}</a>,
+                     % endfor
+                    匹配得xpath列表</p>
+                % else:
+                    <p>
+                    <a href="javascript:void(0)" cls="${url_regexs[key]['_id']}" class="edit-regex-btn">${key}</a>匹配得xpath列表
+                    </p>
+                % endif
+            % endif
+            <table class="table">
+                <tr>
+                    <td>状态</td>
+                    <td>ID</td>
+                    <td class="fixed-td">URL</td>
+                    <td>operator</td>
+                </tr>
+                % for xpath in xpaths:
+                <tr>
+                    % if xpath['status'] > 0:
+                        <td>待审核</td>
+                        <td>${xpath['_id']}</td>
+                        <td  class="fixed-td">${xpath['eg'][0]}</td>
+                        % if key.split(',') > 1 or key == 'no_match':
+                            <td></td>
+                        % else:
+                            <td><a href="javascript:void(0)" xpath="${xpath['_id']}" url_regex="${url_regexs[key]['_id']}">确定</a></td>
+                        % endif
+                    % else:
+                        <td>已审核</td>
+                        <td>${xpath['_id']}</td>
+                        <td class="fixed-td">${xpath['eg'][0]}</td>
+                        <td></td>
+                    % endif
+                </tr>
+                % endfor
+            </table>
+        % endfor
+    % endif
+    % if unmatched_regex:
+        <p>
+        % for regex in unmatched_regex:
+            <a href="javascript:void(0)" cls="${url_regexs[regex]['_id']}" class="edit-regex-btn">${regex}</a>, 
+        % endfor
+        不匹配任何xpath</p>
+    % endif
+    </div>
+    % else:
+        <p>没有结果.</p>
+    % endif
+    <div id="form-list">
+        % for url_reg, url_regex  in url_regexs.iteritems():
+        <div class="form-detail" id="block-${url-regex['_id']}">
+            <form class="from-horizontal" id="form-${url_regex['_id']}">
+                <input type="hidden" name="_id" value="${url_regex['_id']}"/>
+                <div class="control-group">
+                    <label class="control-label" for="url_reg">正则:</label>
+                    <div class="controls"><input type="text" name="url_reg" id="url_reg"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="black_reg_list">黑名单:</label>
+                    <div class="controls"><input type="text" name="black_reg_list" id="black_reg_list"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="white_reg_list">白名单</label>
+                    <div class="controls"><input type="text" name="white_reg_list" id="white_reg_list"/></div>
+                </div>
+                <input type="hidden" name="xpath_ids" />
+                <div class="control-group">
+                    <button class="btn" style="float:right;" cls="${url_regex['_id']}">提&nbsp;交</button>
+                    <button class="btn btn-primary" style="float:right;margin-right:5px;"  cls="${url_regex['_id']}">检&nbsp;查</button>
+                </div>
+            </form>
+        </div>
+        % endfor
+    </div>
+    <script type="text/html" id="regex-add-form">
+        <form action="{0}" method="post" id="regex-{1}"  class="form-horizontal">
+            <div class="control-group">
+                <label class="control-label" for="url_reg">正则:</label>
+                <div class="controls"><input type="text" name="url_reg" id="url_reg"/></div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="black_reg_list">黑名单:</label>
+                <div class="controls"><input type="text" name="black_reg_list" id="black_reg_list"/></div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="white_reg_list">白名单</label>
+                <div class="controls"><input type="text" name="white_reg_list" id="white_reg_list"/></div>
+            </div>
+            <input type="hidden" name="xpath_ids" />
+            <div class="control-group">
+                <button class="btn" style="float:right;">提&nbsp;交</button>
+                <button class="btn btn-primary" style="float:right;margin-right:5px;">检&nbsp;查</button>
+            </div>
+        </form>
+    </script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.edit-regex-btn').each(function () {
+                $(this).attr('data-placement', 'bottom');
+                $(this).attr('data-html', 'true');
+                //$(this).attr('data-content', 'hello');
+            });
+        });
+
+        $('.edit-regex-btn').click(function () {
+            var self = $(this);
+            if (!self.attr('data-content')) {
+                self.attr('data-content', $("#regex-add-form").html());
+                self.popover('show');
+            }
+        });
+    </script>
+</%def>

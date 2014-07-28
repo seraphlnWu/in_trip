@@ -1,0 +1,270 @@
+<%inherit file="../base.html"/>
+<%def name="title()">
+    黑名单管理
+</%def>
+
+<%!
+from admin.config.consts import ROLE 
+from bottle import request
+s = request.environ.get('beaker.session')
+%>
+<%def name="content()">
+% if s.get('role', None) == ROLE.ROOT:
+    <div>
+        <form class="form-search" method="get" style="margin-bottom:15px;margin-top:10px;margin-left:auto;margin-right:auto;width:60%;">
+            <div class="input-append">
+                <input type="text" name="keyword" class="input-xlarge search-query" placeholder="url" value="${keyword}">
+                <button type="submit" class="btn">Search</button>&nbsp;&nbsp;&nbsp;
+            </div>
+        </form>
+    </div>
+    <div id="succeed-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作成功.</span>
+    </div>
+    <table class="table">
+        <thead>
+        <tr>
+            <td>Siteid</td>
+            <td>SiteName</td>
+            <td>Domain</td>
+            <td>operation</td>
+        </tr>
+        </thead>
+        <tbody>
+        % if not sites:
+            <tr>没有结果!</tr>
+        % else:
+            % for site in sites:
+                <tr class="expand" query="${query}" cls="${site['_id']}">
+                    <td>${site['_id']}</td>
+                    <td>${site['site_name']}</td>
+                    <td>${site['domain']}</td>
+                    <td>
+                    <!--    <a href="javascript:void(0)" class="operation"><i class="icon-edit"></i></a>
+                        <a href="javascript:void(0)" class="operation"><i class="icon-remove"></i></a>
+                    -->
+                        <a href="javascript:void(0)" class="operation add-btn" site="${site['_id']}"><i class="icon-plus"></i></a>
+                    </td>
+                </tr>
+                % if site['blacklist']:
+                    % for black_item in site['blacklist']:
+                        <tr class="expand-${black_item['site_id']} well" id="row-${black_item['_id']}">
+                            <td></td>
+                            <td>${black_item['url_reg']}</td>
+                            <td>${black_item['detail']}</td>
+                            <td>
+                                <a href="javascript:void(0)" class="operation edit-btn" cls="${black_item['_id']}"><i class="icon-edit"></i></a>
+                                <a href="javascript:void(0)" class="operation del-btn" cls="${black_item['_id']}"><i class="icon-remove"></i></a>
+                            </td>
+                        </tr>
+                    % endfor
+                % endif
+            % endfor
+        %endif
+    </table>
+
+    % if not keyword:
+        <div class="pagination pagination-centered">
+            <ul>
+            % for page_no, label in h.pagination(page):
+                % if page_no == page:
+                    <li class="disabled"><a href="/blacklist/index/${page_no}">${label}</a></li>
+                % elif page_no > 0:
+                    <li class="active"><a href="/blacklist/index/${page_no}">${label}</a></li>
+                % else:
+                    <li class="disabled"><a href="javascript:void(0)">${label}</a></li>
+                % endif
+            % endfor
+            </ul>
+        </div>
+    % endif
+
+    <div id="modal-form" class="modal hide fade">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>黑名单管理</h3>
+        </div>
+        <div class="modal-body">
+            <div id="error-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <span>操作失败.</span>
+            </div>
+
+            <form class="form-horizontal" id="add-form" method="post">
+                <input type="hidden" name="site_id"/>
+                <input type="hidden" name="_id"/>
+                <div class="control-group">
+                    <label class="control-label" for="url_reg">URL正则:</label>
+                    <div class="controls"><input type="text" name="url_reg" id="url_reg" check-type="required" required-message="不能为空!" class="input-xlarge"/></div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="detail">描述:</label>
+                    <div class="controls"><input type="text" name="detail" id="detail" check-type="required" required-message="不能为空!" class="input-xlarge"/></div>
+                </div>
+            </form>
+
+        <div id="regex-error-tip" class="alert fade in alert-error" style="display:none;margin-bottom:0px;">
+            <span>正则不匹配.</span>
+        </div>
+
+        </div>
+        <div class="modal-footer">
+            <a href="javascript:void(0)" class="btn modal-close" cls="modal-form">取&nbsp;消</a>
+            <a href="javascript:void(0)" class="btn btn-primary" id="submit-btn">提&nbsp;交</a>
+        </div>
+    </div>
+    <script type="text/javascript">
+        var EDIT = false;
+        $(":input[name=keyword]").focus();
+        $('.add-btn').click(function (e){
+            e.stopPropagation()
+            EDIT = false;
+            $(":input[name=site_id]").val($(this).attr('site'));
+            $("#modal-form").modal("show");
+        });
+
+        $(document).on('click', '.edit-btn', function (){
+            EDIT = true;
+            var cls = $(this).attr('cls');
+            $(":input[name=_id]").val(cls);
+            $.get("/blacklist/j_get_black", {'_id': cls}, function (data) {
+                if (data.status) {
+                    var form_data = data.data;
+                    $(":input[name=url_reg]").val(form_data.url_reg);
+                    $(":input[name=detail]").val(form_data.detail);
+                    $("#modal-form").modal("show");
+                } else {
+                    showTip("error-alert-tip");
+                }
+             });
+        });
+
+        $(".modal-close").click(function () {
+            var cls = $(this).attr('cls');
+            $("#" + cls).modal('hide');
+            $('#add-form').reset();
+        });
+
+        <!-- function check_regex() { -->
+        <!--     var regex = $(":input[name=url_reg]").val(); -->
+        <!--     var url = $(":input[name=url]").val(); -->
+        <!--     var match = url.match(regex); -->
+        <!--     if (match) { -->
+        <!--         return true; -->
+        <!--     } else { -->
+        <!--         showTip('regex-error-tip'); -->
+        <!--         return false; -->
+        <!--     } -->
+        <!-- } -->
+
+        $('#submit-btn').click(function () {
+            if (!$('#add-form').validation())
+                return false;
+            if (EDIT) {
+                var options = {
+                    type: "post",
+                    url: "/blacklist/update",
+                    success: function (data) {
+                        if (data.status) {
+                            $("#modal-form").modal('hide');
+                            var row =  $("#row-" + $(":input[name=_id]").val());
+                            row.children().eq(1).text($(":input[name=url_reg]").val());
+                            row.children().eq(2).text($(":input[name=detail]").val());
+                            $('#add-form').reset();
+                            showTip("succeed-alert-tip");
+                        } else {
+                            showTip("error-alert-tip");
+                        }
+                    },
+                };
+            } else {
+                var options = {
+                    type: "post",
+                    url: "/blacklist/add",
+                    success: function (data) {
+                        if (data.status) {
+                            $('#add-form').reset();
+                            $("#modal-form").modal('hide');
+                            showTip("succeed-alert-tip");
+                        } else {
+                            showTip("error-alert-tip");
+                        }
+                    },
+                };
+            }
+            $("#add-form").ajaxSubmit(options);
+        });
+
+        $('.expand').click(function (e) {
+            e.preventDefault();
+            var self = $(this);
+            var cls = self.attr('cls');
+            var query = self.attr('query');
+            if (query == 'false') {
+                $.get("/blacklist/j_get_blacklist",
+                    {'site_id': cls},
+                    function (data) {
+                        for (index in data) {
+                            var row = data[index];
+                            var tr = document.createElement('tr');
+                            tr.setAttribute('class', "expand-" + cls + " well");
+                            tr.setAttribute('id', "row-" + row._id);
+                            var td1 = document.createElement('td');
+                            tr.appendChild(td1)
+                            var td2 = document.createElement('td');
+                            td2.innerText = row.url_reg;
+                            tr.appendChild(td2);
+                            var td3 = document.createElement('td');
+                            td3.innerText = row.detail;
+                            tr.appendChild(td3);
+
+                            var td4 = document.createElement('td');
+                            //edit btn 
+                            var a = document.createElement('a');
+                            a.href = "javascript:void(0)";
+                            a.setAttribute('class', "operation edit-btn");
+                            a.setAttribute('cls', row._id);
+                            var i = document.createElement('i');
+                            i.setAttribute('class', 'icon-edit');
+                            a.appendChild(i);
+                            td4.appendChild(a);
+                            //del btn
+                            var a = document.createElement('a');
+                            a.href = "javascript:void(0)";
+                            a.setAttribute('class', "operation del-btn");
+                            a.setAttribute('cls', row._id);
+                            var i = document.createElement('i');
+                            i.setAttribute('class', 'icon-remove');
+                            a.appendChild(i);
+                            td4.appendChild(a);
+
+                            tr.appendChild(td4);
+                            $(tr).insertAfter(self);
+                        };
+                        self.attr('query', 'true');
+                    }
+                );
+            }
+            $('.expand-' + cls).toggle();
+        });
+
+        $(document).on('click', '.del-btn', function () {
+                if (confirm('确认要删除')) {
+                var self = $(this);
+                var cls = self.attr('cls');
+                $.get('/blacklist/j_delete', {'_id': cls}, function (data) {
+                    if (data.status) {
+                        showTip('succeed-alert-tip');                        
+                        $('#row-' + cls).remove()
+                    } else {
+                        showTip('error-alert-tip');                        
+                    }
+                });
+            }
+        });
+    </script>
+%else:
+<h2>无权限查看当前页面</h2>
+%endif
+</%def>

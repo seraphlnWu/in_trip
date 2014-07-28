@@ -1,0 +1,21 @@
+/home/operation/buzzMaster/engine.log /home/operation/buzzMaster/spider.log /home/operation/buzzMaster/extractor.log{
+daily
+rotate 3
+dateext
+dateformat -%Y-%m-%d
+extension .log
+create 0644 operation operation
+missingok
+notifempty
+sharedscripts
+postrotate
+    base_path=/home/operation/buzzMaster
+    for pidfile in $base_path/*.pid
+    do
+    if [ "$pidfile" != "$base_path/timer.pid" ]; then
+        kill -10 `cat $pidfile`
+    fi
+    done
+endscript
+}
+

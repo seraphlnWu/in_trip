@@ -1,0 +1,506 @@
+<%inherit file="../base.html"/>
+
+
+<%def name="title()">
+    正则管理
+</%def>
+
+<%def name="style()">
+    <style type="text/css">
+        .fixed-td {width:80%;}
+        .form-detail {
+            width:320px;
+            clear:both;
+            display:none;
+            position:absolute;
+            border:1px solid rgba(0, 0, 0, 0.2);
+            opacity: 1;
+            background-color:#fff;
+        }
+        .popover-content {padding:5px;}
+        form {margin:0px;}
+        .form-horizontal .control-label {width:50px;}
+        .form-horizontal .controls {margin-left:60px;}
+        .form-horizontal .control-group {margin-bottom:3px;}
+        .arrow {width:0px;height:0px;border-color:transparent;border-style:solid;border-width:11px;display:block;border-top-width:0px;border-bottom-color:#ffffff;font-size:0;position:absolute;top:-11px;}
+        .arrow_box {
+            position: relative;
+            background: #fff;
+        }
+        .arrow_box:after, .arrow_box:before {
+            bottom: 100%;
+            border: solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+        }
+        .arrow_box:after {
+            border-color: rgba(255, 255, 255, 0);
+            border-bottom-color: #fff;
+            border-width: 15px;
+            left: 50%;
+            margin-left: -15px;
+        }
+        .arrow_box:before {
+            border-color: rgba(0, 0, 0, 0);
+            border-bottom-color: rgba(0, 0, 0, 0.2);
+            border-width: 16px;
+            left: 50%;
+            margin-left: -16px;
+        }
+    </style>
+</%def>
+<%def name="content()">
+    <div>
+        <form class="form-search" method="get" style="margin-bottom:15px;margin-top:10px;margin-left:auto;margin-right:auto;width:60%;">
+            <div class="input-append">
+                <input type="text" name="keyword" class="input-xlarge search-query" placeholder="url" value="${keyword}">
+                <button type="submit" class="btn">Search</button>
+            </div>
+        </form>
+    </div>
+    <div id="succeed-alert-tip" class="alert fade in alert-success" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作成功.</span>
+    </div>
+    <div id="error-alert-tip" class="alert fade in alert-error" style="display:none;margin-bottom:0px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <span>操作失败.</span>
+    </div>
+      
+    % if site:
+    <div id="site-info" cls="${site._id}">
+        <p>${site.site_name} : ${site.domain}<a href="javascript:void(0)" class="edit-regex-btn" cls="add">添加正则</a></p>
+    </div>
+    <div id="regex-section">
+    % if not regex_xpaths:
+        <p>该网站还没有配置 xpath.</p>
+    % else:
+        % for key, xpaths in regex_xpaths.iteritems():
+            % if ',,,,,,,,,,,,,,' in key:
+                <p>未匹配的列表<a href="javascript:void(0)" class="edit-regex-btn" cls="add">添加正则</a></p>
+            % else:
+                <p>
+                <%
+                    keys = key.split(',,')
+                %>
+                % if 15 > len(keys) > 1:
+                    % for regex in keys: 
+                    <a href="javascript:void(0)" cls="${url_regexs[regex]['_id']}" class="edit-regex-btn" show="show"
+                        % if url_regexs[regex].get('level') == 1:
+                        style="color:red;"
+                        % endif
+                        >${regex|n}</a>,
+                     % endfor
+                    匹配的 xpath 列表</p>
+                % else:
+                    <p>
+                    <a href="javascript:void(0)" cls="${url_regexs[key]['_id']}" class="edit-regex-btn"
+                        % if url_regexs[key].get('level') == 1:
+                            style="color:red;"
+                        % endif
+                        % if checked and checked == key:
+                            style="color: #00EC00;"
+                        % endif
+                       >${key|n}</a> <a href="javascript:void(0)" class="operation del-btn" cls="${url_regexs[key]['_id']}"><i class="icon-remove"></i></a>匹配得xpath列表
+                    </p>
+                % endif
+            % endif
+            <table class="table">
+                <tr>
+                    <td>状态</td>
+                    <td>ID</td>
+                    <td class="fixed-td">URL</td>
+                    <td>operator</td>
+                </tr>
+                % for xpath in xpaths:
+                    %if 'route' in xpath['xpath'] and not xpath['xpath']['route']:
+                <tr id="row-${xpath['_id']}" class="xpath-row alert-error" cls="${xpath['_id']}" eg="${xpath['eg'][0]}">
+                    %else:
+                <tr id="row-${xpath['_id']}" class="xpath-row" cls="${xpath['_id']}" eg="${xpath['eg'][0]}">
+                    %endif
+                    % if xpath['status'] > 0:
+                        <td style="color:red">待审核</td>
+                        <td><a href="/xpath/index/1?keyword=${xpath['_id']}" target="_blank">${xpath['_id']}</a></td>
+                        <td  class="fixed-td"><a href="${xpath['eg'][0]}" target="_blank">${xpath['eg'][0]}</a></td>
+                        % if 15 <= len(key.split(',')):
+                            <td></td>
+                        % elif len(key.split(',')) > 1:
+                            <td>
+                            % for regex in key.split(','):
+                        <a href="javascript:void(0)" level="${url_regexs[regex].get('level', 0)}" xpath="${xpath['_id']}" url_regex="${url_regexs[regex]['_id']}" class="make-sure-btn">绑定</a>
+                                
+                            % endfor
+                        </td>
+                        % else:
+                        <td><a href="javascript:void(0)" level="${url_regexs[key].get('level', 0)}" xpath="${xpath['_id']}" url_regex="${url_regexs[key]['_id']}" class="make-sure-btn">绑定</a></td>
+                        % endif
+                    % else:
+                        <td>已审核</td>
+                        <td><a href="/xpath/index/1?keyword=${xpath['_id']}" target="_blank">${xpath['_id']}</a></td>
+                        <td  class="fixed-td"><a href="${xpath['eg'][0]}" target="_blank">${xpath['eg'][0]}</a></td>
+                        % if len(key.split(',')) < 2 and url_regexs[key].get('level', 0) == 1:
+                        <td><a href="javascript:void(0)" level="${url_regexs[key].get('level', 0)}" xpath="${xpath['_id']}" url_regex="${url_regexs[key]['_id']}" class="unsure-btn">解绑</a></td>
+                        % else:
+                            <td></td>
+                        % endif
+                    % endif
+                </tr>
+                % endfor
+            </table>
+        % endfor
+    % endif
+    % if unmatched_regex:
+        <p>
+        % for regex in unmatched_regex:
+        <a href="javascript:void(0)" cls="${url_regexs[regex]['_id']}" class="edit-regex-btn"
+            % if url_regexs[regex].get('level') == 1:
+            style="color:red;"
+            % endif
+            >${regex}</a> <a href="javascript:void(0)" class="operation del-btn" cls="${url_regexs[regex]['_id']}"><i class="icon-remove"></i></a>, 
+        % endfor
+        不匹配任何xpath</p>
+    % endif
+    </div>
+    % if not keyword:
+    <div class="pager">
+        <p><a href="/url_regex/index?skip=${skip + 1}">跳过</a></p>
+    </div>
+    % endif
+    <div id="form-list">
+        % for url_reg, url_regex in url_regexs.iteritems():
+        <div class="form-detail" id="block-${url_regex['_id']}">
+            <div class="arrow_box"></div>
+            <form class="form-horizontal" id="form-${url_regex['_id']}" action="/url_regex/update" method="post">
+                <input type="hidden" name="site_id" value="${site._id}"/>
+                <div class="control-group">
+                    <input type="hidden" name="_id" value="${url_regex['_id']}"/>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="url_reg">正则:</label>
+                    <div class="controls">
+                        <input type="text" name="url_reg" id="url_reg" value="${url_regex['url_reg']}"/>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="black_reg_list">黑名单:</label>
+                    <div class="controls">
+                        <textarea name="black_reg_list" id="black_reg_list">${'\r\n'.join(url_regex.get('black_reg_list', []))}</textarea>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="white_reg_list">白名单</label>
+                    <div class="controls">
+                        <textarea name="white_reg_list" id="white_reg_list">${'\r\n'.join(url_regex.get('white_reg_list', []))}</textarea>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="level-${url_regex['_id']}">层级</label>
+                    <div class="controls">
+                        <select name="level" id="level-${url_regex['_id']}" class="input-small associate" cls="${url_regex['_id']}">
+                            <%
+                                selected_value = url_regex.get('level', 0)
+                            %>
+                            % if selected_value == 0:
+                            <option value="0" selected="selected">不分层</option>
+                            <option value="1" >第一层</option>
+                            <option value="2">第二层</option>
+                            % elif selected_value == 1:
+                            <option value="0">不分层</option>
+                            <option value="1" selected="selected">第一层</option>
+                            <option value="2">第二层</option>
+                            % else:
+                            <option value="0">不分层</option>
+                            <option value="1" >第一层</option>
+                            <option value="2" selected="selected">第二层</option>
+                            % endif
+                        </select>
+                    </div>
+                </div>
+                <div class="control-group" id="select-${url_regex['_id']}"></div>
+                <div class="control-group">
+                    <a href="javascript:void(0)" class="btn submit-btn" style="float:right;" cls="${url_regex['_id']}">提&nbsp;交</a>
+                    <a href="javascript:void(0)" class="btn btn-primary check-btn" style="float:right;margin-right:5px;"  cls="${url_regex['_id']}">检&nbsp;查</a>
+                </div>
+            </form>
+        </div>
+        % endfor
+        <div class="form-detail" id="block-add">
+            <div class="arrow_box"></div>
+            <form class="form-horizontal" id="form-add" action="/url_regex/add" method="post">
+                <input type="hidden" name="site_id" value="${site._id}"/>
+                <div class="control-group">
+                    <label class="control-label" for="url_reg">正则:</label>
+                    <div class="controls">
+                        <input type="text" name="url_reg" id="url_reg" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="black_reg_list">黑名单:</label>
+                    <div class="controls">
+                        <textarea name="black_reg_list" id="black_reg_list"></textarea>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="white_reg_list">白名单</label>
+                    <div class="controls">
+                        <textarea name="white_reg_list" id="white_reg_list"></textarea>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="level-add">层级</label>
+                    <div class="controls">
+                        <select name="level" id="level-add" class="input-small associate" cls="add">
+                            <option value="0">不分层</option>
+                            <option value="1">第一层</option>
+                            <option value="2">第二层</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control-group" id="select-add"></div>
+                <div class="control-group">
+                    <a href="javascript:void(0)" class="btn submit-btn" style="float:right;" cls="add">提&nbsp;交</a>
+                    <a href="javascript:void(0)" class="btn btn-primary check-btn" style="float:right;margin-right:5px;"  cls="add">检&nbsp;查</a>
+                </div>
+            </form>
+    </div>
+
+    <script type="text/javascript" src="/static/js/jquery-ajax-submit.js"></script> 
+    <script type="text/javascript" src="/static/js/jquery-utils.js"></script> 
+    <script type="text/javascript">
+        $('.edit-regex-btn').click(function () {
+            var self = $(this);
+            var cls = self.attr('cls'); 
+            var target = $("#block-" + cls);
+            if (target.css('display') == 'none') {
+                var position = self.position();
+                var width = self.width();
+                var height = self.height()
+                target.css({'left': position.left  + width/2 - 140, 'top': position.top + height + 13}).show();
+                var container = $('#select-' + cls);
+                if (cls != 'add' && container.html().length < 1) {
+                    var site_id = $('#site-info').attr('cls');
+                    var level = parseInt($("#form-" + cls + " #level-" + cls).val());
+                    if (level != 0) {
+                        $.get('j_get_url_regex_by_level', {'level': level == 1?2:1, 'site_id': site_id, 'url_regex_id': cls}, function (data) {
+                            var tip = level == 1?"子层":"父层";
+                            var label = document.createElement('level');
+                            //label.style.display = "inline-block";
+                            label.className = "control-label";
+                            label.innerText = tip;
+                            var select = document.createElement('select');
+
+                            select.multiple = level == 1?true:false;
+                            level == 1? select.name = "children": select.name = "parent";
+                            select.className = "input-large";
+                            if (level == 2) {
+                                var option = document.createElement('option');
+                                option.value = "";
+                                option.text = "----请选择----";
+                                select.add(option);
+                            }
+                            for (var index in data) {
+                                var option = document.createElement('option');
+                                option.value = data[index]._id;
+                                option.text = data[index].url_reg;
+                                option.selected = data[index].selected;
+                                select.add(option);
+                            }
+                            var div = document.createElement('div');
+                            div.className = "controls";
+                            div.appendChild(select);
+                            container.append(label);
+                            container.append(div);
+                        });
+                    }
+                }
+            } else {
+                target.hide();
+            }
+        });
+
+        function getAllRow() {
+            var result = {};
+            $('.xpath-row').each(function () {
+                var self = $(this);
+                var cls = self.attr('cls');
+                var eg = self.attr('eg').replace(/https?:\/\//, "");
+                result[cls] = eg;
+                self.removeClass('alert-error');
+            });
+            return result;
+        }
+        $('.check-btn').click(function () {
+            var cls = $(this).attr('cls');
+            $("#block-" + cls).hide();
+            var formId = "#form-" + cls;
+            var regex = new RegExp($(formId + " :input[name=url_reg]").val());
+            var white_list = $(formId + " #white_reg_list").val().split('\n');
+            var black_list = $(formId + " #black_reg_list").val().split('\n');
+            var allxpaths = getAllRow();
+            for (var key in allxpaths) {
+                var eg = allxpaths[key];
+                if (eg.match(regex)) {
+                    var matched = false;
+                    for (var index in white_list) {
+                        var white_regex = white_list[index];
+                        if (white_regex.length > 0 && eg.match(white_regex)) {
+                            $("#row-" + key).addClass("alert-error");
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (!matched) { // check balck list
+                        for (var index in black_list) {
+                            var black_regex = black_list[index];
+                            if (black_regex.length > 0 && eg.match(black_regex)) {
+                                $("#row-" + key).removeClass("alert-error");
+                                matched = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!matched) {
+                        $("#row-" + key).addClass("alert-error");
+                    }
+                }
+            }
+            return false;
+        });
+
+        $(document).on('click', '.make-sure-btn', function () {
+            var self = $(this);
+            var level = self.attr('level');
+            var xpath_id = self.attr('xpath');
+            var url_regex_id = self.attr('url_regex');
+            $.post("/url_regex/j_associate_xpath", 
+                {'xpath_id': xpath_id, 'url_regex_id': url_regex_id},
+                function (data) {
+                    if (data.status) {
+                        showTip('succeed-alert-tip');
+                        $('#row-' + xpath_id).children().eq(0).text("已审核");
+                        if (level == "1") {
+                            self.text('解绑');
+                            self.attr('class', 'unsure-btn');
+                        } else {
+                            self.remove();
+                        }
+                    }else {
+                        showTip('error-alert-tip');
+                    }
+                }
+            );
+        });
+
+        $(document).on('click', '.unsure-btn', function () {
+            var self = $(this);
+            var level = self.attr('level');
+            var xpath_id = self.attr('xpath');
+            var url_regex_id = self.attr('url_regex');
+            $.post("/url_regex/j_dissociate", 
+                {'xpath_id': xpath_id, 'url_regex_id': url_regex_id},
+                function (data) {
+                    if (data.status) {
+                        showTip('succeed-alert-tip');
+                        $('#row-' + xpath_id).children().eq(0).text("待审核");
+                        if (level == 1) {
+                            self.text('绑定');
+                            self.attr('class', 'make-sure-btn');
+                        } else {
+                            self.remove();
+                        }
+
+                    }else {
+                        showTip('error-alert-tip');
+                    }
+                }
+            );
+        });
+
+        $('.submit-btn').click(function () {
+            var cls = $(this).attr('cls');
+            var target_form = $('#form-' + cls);
+            var options = {
+                type: 'post',
+                url: target_form.attr('action'),
+                success: function (data) {
+                if (data.status) {
+                        target_form.reset();
+                        showTip('succeed-alert-tip');
+                        setTimeout(function () {location.reload();}, 1000);
+                    } else {
+                        alert(data.msg);
+                        showTip('error-alert-tip');
+                    }
+                }
+            };
+            target_form.ajaxSubmit(options);
+            $("#block-" + cls).hide();
+            return false;
+        });
+
+        $('.associate').change(function () {
+            var site_id = $('#site-info').attr('cls');
+            var self = $(this);
+            var level = parseInt(self.find('option:selected').val());
+            var url_regex_id = self.attr('cls');
+            var container = $("#select-" + url_regex_id);
+            container.html('');
+            if (level == 0) {
+                return;
+            }
+            $.get('j_get_url_regex_by_level', {'level': level == 1?2:1, 'site_id': site_id, 'url_regex_id': url_regex_id}, function (data) {
+                var tip = level == 1?"子层":"父层";
+                var label = document.createElement('level');
+                //label.style.display = "inline-block";
+                label.className = "control-label";
+                label.innerText = tip;
+                var select = document.createElement('select');
+                level == 1? select.name = "children": select.name = "parent";
+                select.multiple = level == 1?true:false;
+                select.className = "input-large";
+                if (level == 2) {
+                    var option = document.createElement('option');
+                    option.value = "";
+                    option.text = "----请选择----";
+                    select.add(option);
+                }
+                for (var index in data) {
+                    var option = document.createElement('option');
+                    option.value = data[index]._id;
+                    option.text = data[index].url_reg;
+                    option.selected = data[index].selected;
+                    select.add(option);
+                }
+                var div = document.createElement('div');
+                div.className = "controls";
+                div.appendChild(select);
+                container.append(label);
+                container.append(div);
+                //$(select).insertAfter(self);
+                //$(label).insertAfter(self);
+            });
+        });
+    
+        $('.del-btn').click(function () {
+            if (confirm("确定要删除么?")) {
+                var cls = $(this).attr('cls');
+                $.get('/url_regex/j_delete/' + cls, function (data) {
+                    if (data.status) {
+                        showTip('succeed-alert-tip');
+                        location.reload();
+                    } else {
+                        showTip('error-alert-tip');
+                    }
+                });
+            }
+        });
+
+    </script>
+    % else:
+        <p>没有结果.</p>
+    % endif
+
+</%def>

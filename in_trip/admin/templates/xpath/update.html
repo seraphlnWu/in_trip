@@ -1,0 +1,222 @@
+<%!
+from admin.config.consts import COLUMN_MAP
+%>
+<%inherit file="../base.html"/>
+<%def name="title()">
+    编辑XPath
+</%def>
+
+<%def name="style()">
+    <style type="text/css">
+    .controls p {margin-bottom:0px;line-height:25px;}
+    .control-group>p {width:50px;margin:auto;}
+</style>
+</%def>
+
+
+<%def name="content()">
+    <div style="margin-top:15px;">
+        <div id="error-alert-tip" class="alert fade in alert-error" style="display:none;margin-bottom:0px;">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <span>标题， 时间，正文必选.</span>
+        </div>
+        <form class="form-horizontal" id="edit-form" action="/xpath/update" method="post">
+            <input type="hidden" name="_id" value="${xpath._id}"/>
+            <div class="control-group">
+                <label class="control-label" for="eg">URL:</label>
+                <div class="controls">
+                    <input type="text" name="eg" id="eg" value="${'___'.join(xpath.eg)}" class="input-xlarge" style="width:510px;"/>
+                </div>
+            </div>
+            % for column, label in COLUMN_MAP.iteritems():
+            <%
+                value = xpath.xpath.get(column)
+            %>
+            % if value:
+            <div class="control-group">
+                <label class="control-label" for="title">${label}:</label>
+                % if isinstance(value[0], (str, unicode)):
+                    <div class="controls">
+                        <input type="checkbox" name="${column}" value="${column}0" checked/>
+                        <input type="text" name="${column}0" id="${column}0" class="input-xlarge" value="${value[0]}"/> <input type="text" name="${column}_regex" value="${value[1]}"/>
+                    </div>
+                    <p><a href="javascript:void(0)" class="add-input" prefix="${column}" index="0">添加</a></p>
+                % else:
+                % for i, x in enumerate(value[0]):
+                    % if i == 0:
+                    <div class="controls">
+                        <input type="checkbox" name="${column}" value="${column}${i}" checked/>
+                        <input type="text" name="${column}${i}" id="${column}${i}" class="input-xlarge" value="${x | h}"/> <input type="text" name="${column}_regex" value="${value[1]}"/>
+                    </div>
+                    % else:
+                    <div class="controls">
+                        <input type="checkbox" name="${column}" value="${column}${i}" checked/>
+                        <input type="text" name="${column}${i}" id="${column}${i}" class="input-xlarge" value="${x | h}"/>
+                    </div>
+                    % endif
+                    % if i == (len(value[0]) - 1):
+                    <p><a href="javascript:void(0)" class="add-input" prefix="${column}" index=${i}>添加</a></p>
+                    % endif
+                % endfor
+                % endif
+            </div>
+            % else:
+            <div class="control-group">
+                <label class="control-label" for="title">${label}:</label>
+                <div class="controls">
+                    <input type="checkbox" name="${column}" value="${column}0" checked/>
+                    <input type="text" name="${column}0" id="${column}0" class="input-xlarge"/> <input type="text" name="${column}_regex"/>
+                </div>
+                <p><a href="javascript:void(0)" class="add-input" prefix="${column}" index="0">添加</a></p>
+            </div>
+            % endif
+            % endfor
+            <div class="control-group">
+                <label class="control-label" for="domain">网站名:</label>
+                <div class="controls">
+                    <input type="text" name="domain" id="domain" class="input-small" value="${(xpath.prop or {}).get('domain', '')}"/>
+                    <label for="ind" style="display:inline-block">行业:</label>
+                    <select name="ind" id="ind" style="display:inline-block;" class="input-small">
+		      % for industry in industries:
+		        <option value="${industry}">${industry}</option>
+		      % endfor
+                    </select>
+                    <label for="ctgry" style="display:inline-block">网站类型:</label>
+                    <select name="ctgry" id="ctgry" style="display:inline-block;" class="input-small">
+                        <option value="新闻">新闻</option>
+                        <option value="博客">博客</option>
+                        <option value="论坛">论坛</option>
+                        <option value="SNS">SNS</option>
+                        <option value="微博">微博</option>
+                        <option value="视频">视频</option>
+                    </select>
+
+                    <label for="charset" style="display:inline-block">编码:</label>
+                    <select name="charset" id="charset" class="input-small">
+                        <option value="">默认</option>
+                        <option value="utf-8">utf-8</option>
+                        <option value="cp936">cp936</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="rote">路由</label>
+                <div class="controls">
+                    % if xpath.xpath.get('route'):
+                    <input type="checkbox" name="route" id="route" value="1" checked/>
+                    % else:
+                    <input type="checkbox" name="route" id="route" value="1"/>
+                    % endif
+                </div>
+            </div>
+            <div class="control-group" style="width:120px;margin:auto;">
+                <button type="button" class="btn disabled" id="check-btn" disabled="disabled">检&nbsp;查</button>
+                <button type="submit" class="btn btn-primary" id="submit-btn">提&nbsp;交</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="tip-modal" class="modal hide fade">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3></h3>
+        </div>
+        <div class="modal-body">
+        </div>
+        <!-- <div class="modal-footer">
+        </div> -->
+    </div>
+
+    <script type="text/javascript" src="/static/js/bootstrap-validation.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-utils.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-ajax-submit.js"></script>
+    <script type="text/html" id="input-control">
+         <div class="controls">
+             <input type="checkbox" name="{0}" value="{0}{1}" checked/> <input type="text" name="{0}{1}" id="{0}{1}" class="input-xlarge"/>
+         </div>
+    </script>
+    <script type="text/javascript">
+        $('.add-input').click(function () {
+            var self = $(this);
+            var prefix = self.attr('prefix');
+            var index = parseInt(self.attr('index')) + 1;
+            var html_source = $("#input-control").html().format([prefix, index]);
+            //$(html_source).insertBefore(self);
+            $(self.parent()).before(html_source);
+            self.attr('index', index)
+        });
+
+        function checkEssential() {
+            var check_list = ['title', 'at', 'src'];
+            for (index in check_list)  {
+                var column = check_list[index];
+                if ($(':checkbox[name=' + column + ']:checked').size() < 1) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        $('form').submit(function () {
+                if (! checkEssential()) {
+                    showTip('error-alert-tip');
+                    return false
+                };
+                return true;
+            }
+        );
+
+        $("#check-btn").click(function () {
+            var options = {
+                type: 'post',
+                url: "/xpath/validate2",
+                success: function (data) {
+                    var self = $("#tip-modal");
+                    if (data.status) {
+                        self.children('.modal-header').children('h3').text("验证成功").css('color', 'red');
+                        $("#submit-btn").removeAttr('disabled');
+                        $("#submit-btn").addClass('btn-primary');
+                        $("#submit-btn").removeClass('disabled');
+                        $("#check-btn").removeClass('btn-primary');
+                    } else {
+                        self.children('.modal-header').children('h3').text("验证失败").css('color', 'red');
+                    }
+                    var msg = "";
+                    for (var column in data.result) {
+                        if (column == 'msg') {
+                            continue;
+                        }
+                        msg += column + ':' + data.result[column] + '<br/>';
+                    }
+                    self.children('.modal-body').html(msg);;
+                    $("#tip-modal").modal('show');
+                }
+            };
+            $('form').ajaxSubmit(options);
+        });
+
+        $('input').change(function () {
+            $("#submit-btn").attr('disabled', 'disabled');
+            $("#check-btn").removeAttr('disabled');
+            $("#submit-btn").removeClass('btn-primary');
+            $("#check-btn").addClass('btn-primary');
+            $("#submit-btn").addClass('disabled');
+            $("#check-btn").removeClass('disabled');
+        });
+
+
+        $(document).ready(function () {
+            % if xpath.prop:
+                % if xpath.prop.get('ind'):
+		            $('#ind').find("option[value=" + "${xpath.prop.get('ind')}" + "]").attr("selected",true);
+                    $('#ind').val("${xpath.prop.get('ind')}");
+	            % endif
+                % if  xpath.prop.get('ctgry'):
+                    $('#ctgry').val("${xpath.prop.get('ctgry')}");
+                % endif
+                % if  xpath.prop.get('charset'):
+                    $('#charset').val("${xpath.prop.get('charset')}");
+                % endif
+            % endif
+        });
+    </script>
+</%def>

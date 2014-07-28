@@ -1,0 +1,38 @@
+#!/bin/bash
+
+base_path=/home/operation/buzzMaster
+export PYTHONPATH=$base_path
+
+daemon=uwsgi
+pid=$base_path/admin/uwsgi.pid
+args="--ini $base_path/admin/config/uwsgi.ini"
+
+case "$1" in
+    start)
+        echo "Starting uwsgi"
+        start-stop-daemon -p $pid --start --exec `which $daemon` -- $args
+        ;;
+    stop)
+        echo "Stopping script uwsgi"
+        start-stop-daemon --signal INT -p $pid --stop `which $daemon` -- $args
+        rm $pid
+        ;;
+    reload)
+        echo "Reloading conf"
+        kill -HUP $(cat $pid)
+        ;;
+    status)
+        echo "Get buzzadmin status"
+        kill -USR2 $(cat $pid)
+        exit $?
+        ;;
+    restart)
+        echo "Restart $daemon"
+        kill -HUP $(cat $pid)
+        ;;
+    *)
+        echo "Usage: /etc/init.d/$daemon {start|stop|reload}"
+        exit 1
+    ;;
+esac
+exit 0
