@@ -10,7 +10,7 @@ import urllib
 import logging
 import argparse
 
-from buzz.lib.errors import AppImportError, ArgumentError
+from in_trip.lib.errors import AppImportError, ArgumentError
 
 REDIRECT_TO=getattr(os, 'devnull', '/dev/null')
 

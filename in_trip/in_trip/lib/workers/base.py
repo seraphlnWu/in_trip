@@ -4,9 +4,9 @@ import os
 import signal
 import logging
 
-from buzz.lib.utils import close_on_exec
-from buzz.lib.sock import create_sockets
-from buzz.lib.utils import _setproctitle, reopen_log_file
+from in_trip.lib.utils import close_on_exec
+from in_trip.lib.sock import create_sockets
+from in_trip.lib.utils import _setproctitle, reopen_log_file
 
 
 class Worker(object):

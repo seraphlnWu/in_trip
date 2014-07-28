@@ -12,19 +12,19 @@ import traceback
 from summary.summarization import summary
 from readability.readability import Document
 
-from buzz.lib.mq import MQ
-from buzz.lib.hbase import hb
-from buzz.lib.utils import first
-from buzz.lib.rpc import RPCClient
-from buzz.lib.log import setup_logging
-from buzz.lib.compress import decompress
-from buzz.lib.emotion import get_emotion
-from buzz.lib.serialize import deserialize
-from buzz.lib.store import mongo, sqlstore
-from buzz.lib.workers.sync import SyncWorker
-from buzz.lib.compress import compress, decompress
-from buzz.lib.http import HttpRequest, HttpResponse, get_domain, url_quote, remove_schema, format_url
-from buzz.lib.consts import PAGE_TYPE, DEFAULT, PAGE_TYPE_MAP, SEARCH_ENGINE, DATE_REGEX, EXTRACTOR_QUEUE, HttpCode, DEPTH_LIMIT, MAX_MISC_COUNT
+from in_trip.lib.mq import MQ
+from in_trip.lib.hbase import hb
+from in_trip.lib.utils import first
+from in_trip.lib.rpc import RPCClient
+from in_trip.lib.log import setup_logging
+from in_trip.lib.compress import decompress
+from in_trip.lib.emotion import get_emotion
+from in_trip.lib.serialize import deserialize
+from in_trip.lib.store import mongo, sqlstore
+from in_trip.lib.workers.sync import SyncWorker
+from in_trip.lib.compress import compress, decompress
+from in_trip.lib.http import HttpRequest, HttpResponse, get_domain, url_quote, remove_schema, format_url
+from in_trip.lib.consts import PAGE_TYPE, DEFAULT, PAGE_TYPE_MAP, SEARCH_ENGINE, DATE_REGEX, EXTRACTOR_QUEUE, HttpCode, DEPTH_LIMIT, MAX_MISC_COUNT
 
 from admin.lib.url_regex import regex_decoder
 from admin.config.consts import RECORD_STATUS
@@ -506,7 +506,7 @@ class Article(object):
 
     @property
     def keywords(self):
-        from buzz.lib.search import multi_pattern_search  # uwsgi memory problem
+        from in_trip.lib.search import multi_pattern_search  # uwsgi memory problem
         if not hasattr(self, "_keywords"):
             self._keywords = multi_pattern_search.match(self.title + self.content)
 
@@ -516,9 +516,9 @@ class Article(object):
 if __name__ == '__main__':
     import sys
     import logging
-    from buzz.lib.http import curl
-    from buzz.lib.config import Config
-    from buzz.lib.consts import HttpCode
+    from in_trip.lib.http import curl
+    from in_trip.lib.config import Config
+    from in_trip.lib.consts import HttpCode
     Config.SECTION_NAME = "extractor"
     extractor = Extractor(Config())
     extractor.logger = logging.getLogger()

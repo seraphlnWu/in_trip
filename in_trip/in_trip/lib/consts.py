@@ -4,7 +4,7 @@ import re
 
 from collections import OrderedDict
 
-from buzz.lib.enum import Enum
+from in_trip.lib.enum import Enum
 
 HttpCode = Enum(OK=200,
                 MOVED_PERMANENTLY=301,

@@ -1,5 +1,13 @@
 #coding=utf-8
-import os
+
+import sys, os
+from os.path import realpath, dirname
+from os.path import join as path_join 
+sys.path.insert(
+    0,
+    realpath(path_join(dirname(__file__), '../'))
+)
+
 from bottle import Bottle, TEMPLATE_PATH, run
 from beaker.middleware import SessionMiddleware
 

@@ -4,11 +4,11 @@ import socket
 import logging
 from logging.config import fileConfig
 
-from buzz.lib.pool import ConnectionPool
+from in_trip.lib.pool import ConnectionPool
 
 class ScribeHandler(logging.Handler):
     def __init__(self, host, port):
-        from buzz.lib.scribe_client import ScribeClient
+        from in_trip.lib.scribe_client import ScribeClient
         logging.Handler.__init__(self) # for python 2.6 compatibility
         if not isinstance(port, int):
             port = int(port)

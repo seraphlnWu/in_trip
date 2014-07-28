@@ -2,8 +2,8 @@
 
 # This module start prefork module
 
-from buzz.lib.arbiter import Arbiter
-from buzz.lib.utils import import_app
+from in_trip.lib.arbiter import Arbiter
+from in_trip.lib.utils import import_app
 
 class Launcher(object):
     def __init__(self, worker_uri, config_file, section):

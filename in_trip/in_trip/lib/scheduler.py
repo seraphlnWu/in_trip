@@ -5,7 +5,7 @@
 import time
 import threading
 
-from buzz.lib.consts import DEFAULT_GET_URL_COUNT, MIN_INTERVAL
+from in_trip.lib.consts import DEFAULT_GET_URL_COUNT, MIN_INTERVAL
 
 class Scheduler(object):
     UPDATE_TIME_INTERVAL = {5: MIN_INTERVAL,
@@ -157,7 +157,7 @@ class UrlPool(object):
 
 if __name__ == '__main__':
     import time
-    from buzz.lib.rpc.client import RPCClient
+    from in_trip.lib.rpc.client import RPCClient
     client = RPCClient("127.0.0.1:6262")
     sr = client.call('get_scheduler')
     r = client.call('get_urls', "*")

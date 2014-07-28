@@ -5,8 +5,8 @@ import errno
 import socket
 import select
 
-from buzz.lib.utils import close_on_exec
-from buzz.lib.workers.base import Worker
+from in_trip.lib.utils import close_on_exec
+from in_trip.lib.workers.base import Worker
 
 __all__ = ["SyncWorker"]
 

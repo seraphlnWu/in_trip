@@ -5,9 +5,9 @@
 from pyrant import Tyrant
 from hash_ring import HashRing
 
-from buzz.lib.config import Config
-from buzz.lib.pool import ConnectionPool
-from buzz.lib.serialize import serialize, deserialize
+from in_trip.lib.config import Config
+from in_trip.lib.pool import ConnectionPool
+from in_trip.lib.serialize import serialize, deserialize
 
 class PyTyrant(object):
     def __init__(self, nodes):
@@ -92,7 +92,7 @@ tyrant = PyTyrant(addrs)
 
 if __name__ == '__main__':
     import time
-    from buzz.lib.http import HttpRequest
+    from in_trip.lib.http import HttpRequest
 
     request = HttpRequest("http://search.tianya.cn/bbs?q=%E8%8B%AF%E4%B8%99%E9%85%AE%E5%B0%BF%E7%97%87&pn=1&s=4")
     start = time.time()

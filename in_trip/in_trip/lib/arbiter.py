@@ -10,12 +10,12 @@ import random
 import select
 import traceback
 
-from buzz.lib.pidfile import Pidfile
-from buzz.lib.config import Config
-from buzz.lib.errors import HaltServer
-from buzz.lib.sock import create_sockets
-from buzz.lib.log import setup_file_logging
-from buzz.lib.utils import (getcwd, daemonize, set_non_blocking, close_on_exec,
+from in_trip.lib.pidfile import Pidfile
+from in_trip.lib.config import Config
+from in_trip.lib.errors import HaltServer
+from in_trip.lib.sock import create_sockets
+from in_trip.lib.log import setup_file_logging
+from in_trip.lib.utils import (getcwd, daemonize, set_non_blocking, close_on_exec,
                             reopen_log_file, _setproctitle, set_process_owner, chown,
                             str2bool, get_user_info, import_app, reopen_log_file)
 

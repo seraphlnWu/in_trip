@@ -5,7 +5,7 @@ import ahocorasick
 
 from admin.config.consts import RECORD_STATUS
 
-from buzz.lib.store import mongo
+from in_trip.lib.store import mongo
 
 
 class MultiPatternSearch(object):

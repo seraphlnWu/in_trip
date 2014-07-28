@@ -6,8 +6,8 @@ import redis
 import MySQLdb
 from pymongo import MongoClient
 
-from buzz.lib.config import Config
-from buzz.lib.utils import parse_db_str
+from in_trip.lib.config import Config
+from in_trip.lib.utils import parse_db_str
 
 class MongoConnection(object):
     """\

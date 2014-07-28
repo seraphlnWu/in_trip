@@ -9,11 +9,11 @@ import select
 import signal
 import traceback
 
-from buzz.lib.serialize import serialize
-from buzz.lib.rpc.transport import Transport
-from buzz.lib.workers.coroutine_worker import CoroutineWorker
-from buzz.lib.rpc.utils import build_response, parse_request_args
-from buzz.lib.rpc.error import RPCError, CMDNotFoundError, ServerError
+from in_trip.lib.serialize import serialize
+from in_trip.lib.rpc.transport import Transport
+from in_trip.lib.workers.coroutine_worker import CoroutineWorker
+from in_trip.lib.rpc.utils import build_response, parse_request_args
+from in_trip.lib.rpc.error import RPCError, CMDNotFoundError, ServerError
 
 class RPCServer(CoroutineWorker):
     def handle_request(self, sock=None, client=None, addr=None):

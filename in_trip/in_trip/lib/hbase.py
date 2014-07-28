@@ -2,9 +2,9 @@
 
 import happybase
 
-from buzz.lib.config import Config
-from buzz.lib.store import parse_db_str
-from buzz.lib.compress import compress, decompress
+from in_trip.lib.config import Config
+from in_trip.lib.store import parse_db_str
+from in_trip.lib.compress import compress, decompress
 
 class HbaseClient(object):
     """\

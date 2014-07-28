@@ -6,9 +6,9 @@ import select
 import socket
 
 from threading import Semaphore
-from buzz.lib.rpc.transport import Transport
-from buzz.lib.rpc.utils import build_request, build_response
-from buzz.lib.rpc.error import RPCTimeout, ConnectionClosedError
+from in_trip.lib.rpc.transport import Transport
+from in_trip.lib.rpc.utils import build_request, build_response
+from in_trip.lib.rpc.error import RPCTimeout, ConnectionClosedError
 
 class RPCClient(object):
     def __init__(self, addr): # server addr
@@ -68,6 +68,5 @@ class RPCClient(object):
         pass
 
 if __name__ == '__main__':
-    #client = RPCClient("unix:///home/operation/buzzMaster/timer.sock")
     client = RPCClient("192.168.1.117:6262")
     print client.call("get_scheduler")

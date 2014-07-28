@@ -6,11 +6,11 @@ from collections import deque
 
 from admin.model import Site
 
-from buzz.lib.mq import MQ
-from buzz.lib.rpc import RPCServer
-from buzz.lib.tyrant import tyrant
-from buzz.lib.http import HttpRequest, HttpResponse
-from buzz.lib.consts import (SCHEDULER_INTERVAL,
+from in_trip.lib.mq import MQ
+from in_trip.lib.rpc import RPCServer
+from in_trip.lib.tyrant import tyrant
+from in_trip.lib.http import HttpRequest, HttpResponse
+from in_trip.lib.consts import (SCHEDULER_INTERVAL,
                              DEFAULT_GET_URL_COUNT, URL_IN_QUEUE_SET)
 
 class Engine(RPCServer):
@@ -124,6 +124,6 @@ class Engine(RPCServer):
         return None
 
 if __name__ == '__main__':
-    from buzz.lib.config import Config
+    from in_trip.lib.config import Config
     Config.SECTION_NAME = "engine"
     Engine(Config()).run()

@@ -19,14 +19,14 @@ from requests import Session, exceptions
 import chardet
 from charlockholmes import detect
 
-from buzz.lib.mq import MQ
-from buzz.lib.config import Config
-from buzz.lib.compress import compress
-from buzz.lib.log import setup_logging
-from buzz.lib.pool import ConnectionPool
-from buzz.lib.rpc.client import RPCClient
-from buzz.lib.workers.coroutine_worker import CoroutineWorker
-from buzz.lib.consts import TIMES_LIMIT, CRAWL_TIME_INTERVAL, URL_STATUS, HttpCode, PAGE_TYPE, EXTRACTOR_QUEUE, DEPTH_LIMIT
+from in_trip.lib.mq import MQ
+from in_trip.lib.config import Config
+from in_trip.lib.compress import compress
+from in_trip.lib.log import setup_logging
+from in_trip.lib.pool import ConnectionPool
+from in_trip.lib.rpc.client import RPCClient
+from in_trip.lib.workers.coroutine_worker import CoroutineWorker
+from in_trip.lib.consts import TIMES_LIMIT, CRAWL_TIME_INTERVAL, URL_STATUS, HttpCode, PAGE_TYPE, EXTRACTOR_QUEUE, DEPTH_LIMIT
 
 class UrlMixin(object):
     AVAIL_CACHE_VALUE = re.compile("max-age=(?P<seconds>\d+)")

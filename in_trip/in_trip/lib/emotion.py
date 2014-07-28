@@ -3,7 +3,7 @@
 import json
 import requests
 
-from buzz.lib.config import Config
+from in_trip.lib.config import Config
 
 cfg = Config()
 emotion_address = cfg.get('emotion', 'main')

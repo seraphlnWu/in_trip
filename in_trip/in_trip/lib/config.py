@@ -3,7 +3,7 @@
 import os
 from ConfigParser import SafeConfigParser, NoOptionError
 
-from buzz.lib.singleton import Singleton
+from in_trip.lib.singleton import Singleton
 
 class Config(object):
     """use singleton avoid global variables"""

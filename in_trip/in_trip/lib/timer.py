@@ -10,13 +10,13 @@ import traceback
 import threading
 from cookielib import CookieJar # TODO: replace cookielib, because of it's inefficient.
 
-from buzz.lib.pidfile import Pidfile
-from buzz.lib.scheduler import UrlPool
-from buzz.lib.rpc.error import RPCError
-from buzz.lib.log import setup_file_logging
-from buzz.lib.rpc import RPCServer, RPCClient
-from buzz.lib.consts import SCHEDULER_INTERVAL
-from buzz.lib.utils import daemonize, str2bool, set_process_owner, get_user_info
+from in_trip.lib.pidfile import Pidfile
+from in_trip.lib.scheduler import UrlPool
+from in_trip.lib.rpc.error import RPCError
+from in_trip.lib.log import setup_file_logging
+from in_trip.lib.rpc import RPCServer, RPCClient
+from in_trip.lib.consts import SCHEDULER_INTERVAL
+from in_trip.lib.utils import daemonize, str2bool, set_process_owner, get_user_info
 
 class Timer(RPCServer):
 
@@ -142,7 +142,7 @@ class NoMoreUrlError(RPCError):
     """
 
 if __name__ == '__main__':
-    from buzz.lib.config import Config
+    from in_trip.lib.config import Config
     Config.SECTION_NAME = "timer"
     cfg = Config()
     Timer(Config()).run()

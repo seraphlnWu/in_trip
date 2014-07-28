@@ -6,9 +6,9 @@ import time
 
 import redis
 
-from buzz.lib.config import Config
-from buzz.lib.utils import parse_db_str
-from buzz.lib.serialize import serialize, deserialize
+from in_trip.lib.config import Config
+from in_trip.lib.utils import parse_db_str
+from in_trip.lib.serialize import serialize, deserialize
 
 class MessageQueue(object):
 

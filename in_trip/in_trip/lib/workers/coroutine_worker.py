@@ -13,8 +13,8 @@ import gevent
 from gevent import getcurrent
 from gevent.pool import Pool
 
-from buzz.lib.workers.base import Worker
-from buzz.lib.utils import close_on_exec
+from in_trip.lib.workers.base import Worker
+from in_trip.lib.utils import close_on_exec
 
 __all__ = ["CoroutineWorker"]
 
