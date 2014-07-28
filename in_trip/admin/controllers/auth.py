@@ -6,7 +6,7 @@ import pymongo
 
 from bottle import request, redirect
 
-from buzz.lib.store import mongo
+from in_trip.lib.store import mongo
 from admin.model import Auth
 from admin.lib.utils import render
 from admin.config.consts import RECORD_STATUS, DUMP_FILE_PATH, ROLE

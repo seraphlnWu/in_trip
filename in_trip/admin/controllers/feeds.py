@@ -3,8 +3,8 @@
 import datetime
 from bottle import request, response
 
-from buzz.lib.http import get_domain
-from buzz.lib.consts import INDUSTRY, PAGE_TYPE
+from in_trip.lib.http import get_domain
+from in_trip.lib.consts import INDUSTRY, PAGE_TYPE
 
 from admin.lib.utils import render, jsonify
 from admin.config.consts import RECORD_STATUS

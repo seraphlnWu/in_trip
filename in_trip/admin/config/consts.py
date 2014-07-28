@@ -2,7 +2,7 @@
 
 from collections import OrderedDict
 
-from buzz.lib.enum import Enum
+from in_trip.lib.enum import Enum
 
 from admin.config.config import ROOT
 

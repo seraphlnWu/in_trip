@@ -6,8 +6,8 @@ import MySQLdb
 from json import dumps as json_dumps
 from bottle import request, response
 
-from buzz.lib.store import sqlstore, mongo
-from buzz.lib.http import get_domain, remove_schema
+from in_trip.lib.store import sqlstore, mongo
+from in_trip.lib.http import get_domain, remove_schema
 from admin.config.consts import RECORD_STATUS, SPECIAL_FIELD
 
 from admin.lib.utils import render

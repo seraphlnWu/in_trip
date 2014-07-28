@@ -4,9 +4,9 @@ import pymongo
 from bottle import request, response
 from functools import partial
 
-from buzz.lib.store import mongo
-from buzz.lib.http import get_domain
-from buzz.lib.consts import INDUSTRY
+from in_trip.lib.store import mongo
+from in_trip.lib.http import get_domain
+from in_trip.lib.consts import INDUSTRY
 
 from admin.lib.utils import render
 from admin.model import get_inc_id

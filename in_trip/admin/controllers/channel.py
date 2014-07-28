@@ -5,8 +5,8 @@ from datetime import datetime
 from json import dumps as json_dumps
 from bottle import request, response
 
-from buzz.lib.store import mongo
-from buzz.lib.http import get_domain
+from in_trip.lib.store import mongo
+from in_trip.lib.http import get_domain
 
 from admin.lib.utils import render
 from admin.model import get_inc_id, Channel

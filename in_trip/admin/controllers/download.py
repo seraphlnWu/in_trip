@@ -4,7 +4,7 @@ import pymongo
 
 from bottle import request, response, static_file, redirect
 
-from buzz.lib.store import mongo
+from in_trip.lib.store import mongo
 from admin.config.consts import RECORD_STATUS, DUMP_FILE_PATH, ROLE
 from admin.lib.utils import render
 # from admin.lib.download_task import execute_task

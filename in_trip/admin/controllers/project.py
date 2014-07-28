@@ -4,9 +4,9 @@ import time
 from datetime import datetime, timedelta
 from bottle import request, response, static_file, redirect
 
-from buzz.lib.mq import MQ
-from buzz.lib.store import mongo
-from buzz.lib.consts import DOWNLOAD_QUEUE
+from in_trip.lib.mq import MQ
+from in_trip.lib.store import mongo
+from in_trip.lib.consts import DOWNLOAD_QUEUE
 
 from admin.model import get_inc_id, Download, Auth
 from admin.lib.utils import remove_empty, jsonify, render
