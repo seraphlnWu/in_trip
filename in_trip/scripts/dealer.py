@@ -8,7 +8,7 @@ import datetime
 import itertools
 
 from readability import Document
-from buzz.lib.http import url_quote, get_domain, curl
+from in_trip.lib.http import url_quote, get_domain, curl
 
 from admin.model import DealerFeed, Topic
 

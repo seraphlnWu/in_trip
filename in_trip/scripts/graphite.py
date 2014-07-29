@@ -7,7 +7,7 @@ import datetime
 from pygtail import Pygtail
 from collections import defaultdict
 
-from buzz.lib.http import get_domain as _get_domain
+from in_trip.lib.http import get_domain as _get_domain
 
 MAPPING = {
     'spider': 'takes',

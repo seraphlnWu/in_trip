@@ -3,11 +3,11 @@
 
 import sys
 
-from buzz.lib.mq import MQ
-from buzz.lib.hbase import hb
-from buzz.lib.http import HttpResponse
-from buzz.lib.compress import compress
-from buzz.lib.consts import EXTRACTOR_QUEUE, HttpCode, PAGE_TYPE, DEPTH_LIMIT
+from in_trip.lib.mq import MQ
+from in_trip.lib.hbase import hb
+from in_trip.lib.http import HttpResponse
+from in_trip.lib.compress import compress
+from in_trip.lib.consts import EXTRACTOR_QUEUE, HttpCode, PAGE_TYPE, DEPTH_LIMIT
 
 def main():
     for line in sys.stdin:

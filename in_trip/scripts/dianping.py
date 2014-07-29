@@ -8,7 +8,7 @@ import pyquery
 import zipfile
 import csv
 import requests
-from buzz.youku.writer import XlsWriter
+from in_trip.youku.writer import XlsWriter
 from os import system
 from admin.lib.utils import curl
 from readability.htmls import build_doc

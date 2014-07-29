@@ -5,8 +5,8 @@ import time
 import pymongo
 from cPickle import dumps as pickle_dumps
 
-from buzz.lib.store import rd, pg, mongo
-from buzz.lib.http import get_domain
+from in_trip.lib.store import rd, pg, mongo
+from in_trip.lib.http import get_domain
 
 MONGODB_DB_NAME = 'sandbox_mongo_buzz'
 

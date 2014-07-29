@@ -2,7 +2,7 @@
 import time
 import cPickle
 
-from buzz.store_data.views import pg_db,conn
+from in_trip.store_data.views import pg_db,conn
 
 import logging
 logger = logging.getLogger('parser')
@@ -51,7 +51,7 @@ def get_data(offset,limit=1000):
     return pg_db.fetchall()
 
 def insert_into_hbase():
-    from buzz.store_data.hbase.run import insert_data as hbase_insert
+    from in_trip.store_data.hbase.run import insert_data as hbase_insert
     offset = 0
     limit = 1000
     while True:

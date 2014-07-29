@@ -4,12 +4,12 @@
 import zipfile
 import datetime
 
-from buzz.lib.mq import MQ
-from buzz.lib.store import mongo
+from in_trip.lib.mq import MQ
+from in_trip.lib.store import mongo
 from admin.model import Download
 from admin.config.config import ROOT
 from admin.lib.topic import dump_topic
-from buzz.lib.consts import DOWNLOAD_QUEUE
+from in_trip.lib.consts import DOWNLOAD_QUEUE
 from admin.config.consts import DOWNLOAD_STATUS
 
 

@@ -1,7 +1,7 @@
 #coding=utf-8
 import urllib
 from pymongo import Connection
-from buzz.configurations import FEEDS_DB_HOST
+from in_trip.configurations import FEEDS_DB_HOST
 from admin.model import get_feed_urls
 
 conn = Connection(FEEDS_DB_HOST)

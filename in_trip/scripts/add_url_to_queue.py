@@ -8,12 +8,12 @@ import re
 from urllib import quote
 from itertools import product
 
-from buzz.utils.feed_db import put_url_item
-from buzz.lib.store import mongo
+from in_trip.utils.feed_db import put_url_item
+from in_trip.lib.store import mongo
 from admin.lib.utils import curl
 from admin.model import get_feed_urls
 from readability.htmls import build_doc
-from buzz.lib.http import get_domain
+from in_trip.lib.http import get_domain
 
 logger = logging.getLogger()
 

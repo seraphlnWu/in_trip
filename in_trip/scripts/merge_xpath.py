@@ -2,8 +2,8 @@
 
 import re
 
-from buzz.lib.http import get_domain
-from buzz.lib.store import mongo, get_mongo_connection
+from in_trip.lib.http import get_domain
+from in_trip.lib.store import mongo, get_mongo_connection
 from admin.config.consts import XPATH_STATUS
 
 from admin.model.site import *

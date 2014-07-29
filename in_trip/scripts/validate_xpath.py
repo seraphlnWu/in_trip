@@ -2,8 +2,8 @@
 import sys
 import urlparse
 
-from buzz.utils import feed_db
-from buzz.lib.http import get_domain, curl
+from in_trip.utils import feed_db
+from in_trip.lib.http import get_domain, curl
 from admin.lib.url_regex import regex_decoder, regex_match
 from readability.readability import build_doc
 from admin.lib.store import db

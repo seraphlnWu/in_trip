@@ -5,10 +5,10 @@ import time
 import datetime
 import traceback
 
-from buzz.lib.mq import MQ
-from buzz.lib.mail import mail
-from buzz.lib.http import HttpRequest, url_quote, curl
-from buzz.lib.consts import PAGE_TYPE, INDUSTRY, DEPTH_LIMIT, SEARCH_ENGINE
+from in_trip.lib.mq import MQ
+from in_trip.lib.mail import mail
+from in_trip.lib.http import HttpRequest, url_quote, curl
+from in_trip.lib.consts import PAGE_TYPE, INDUSTRY, DEPTH_LIMIT, SEARCH_ENGINE
 
 from admin.config.consts import RECORD_STATUS
 from admin.model import Site, Feed, DealerFeed, get_keywords, get_feeds, parse_feed, PostFeed

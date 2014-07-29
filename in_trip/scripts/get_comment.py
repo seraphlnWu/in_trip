@@ -8,7 +8,7 @@ from collections import deque
 from lxml.html import tostring
 
 from admin.lib.utils import curl
-from buzz.lib.http import get_domain
+from in_trip.lib.http import get_domain
 from readability.htmls import build_doc
 
 xpath = {            

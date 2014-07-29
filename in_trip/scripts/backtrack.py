@@ -1,6 +1,6 @@
 #coding=utf-8
 
-from buzz.lib.consts import PAGE_TYPE, INDUSTRY
+from in_trip.lib.consts import PAGE_TYPE, INDUSTRY
 
 from admin.model import get_feeds, parse_feed, Project, Topic
 

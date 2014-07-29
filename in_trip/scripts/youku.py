@@ -3,7 +3,7 @@ import urllib
 import json
 import re
 import base64
-from buzz.lib.store import mongo
+from in_trip.lib.store import mongo
 import copy
 import pyquery
 import datetime

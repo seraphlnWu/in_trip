@@ -1,8 +1,8 @@
 #coding=utf-8
 
 
-from buzz.lib.store import mongo
-from buzz.lib.http import get_domain
+from in_trip.lib.store import mongo
+from in_trip.lib.http import get_domain
 
 from admin.model.site import *
 from admin.model import get_inc_id
