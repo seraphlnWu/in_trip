@@ -9,8 +9,8 @@ from StringIO import StringIO
 
 from bottle import response, mako_view
 
-from buzz.lib.store import mongo
-from buzz.lib.http import get_domain
+from in_trip.lib.store import mongo
+from in_trip.lib.http import get_domain
 from admin.lib import webhelper as h
 
 

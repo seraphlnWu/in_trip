@@ -6,16 +6,16 @@ import zipfile
 from datetime import datetime
 from cStringIO import StringIO
 
-from buzz.lib.utils import parse_db_str
-from buzz.lib.compress import decompress
-from buzz.lib.store import SQLStore, mongo
-from buzz.lib.consts import CATEGORY, PAGE_TYPE
+from in_trip.lib.utils import parse_db_str
+from in_trip.lib.compress import decompress
+from in_trip.lib.store import SQLStore, mongo
+from in_trip.lib.consts import CATEGORY, PAGE_TYPE
 
-sqlstore = SQLStore(**parse_db_str("mysql://buzz:f0b5e7@192.168.1.194/buzz_master"))
+sqlstore = SQLStore(**parse_db_str("mysql://root:root@192.168.1.194/in_trip"))
 
 
 def dump_topic(start, end, topic, need_comment=0, FILE_ENCOIDNG='gbk'):
-    from buzz.lib.search import MultiPatternSearch
+    from in_trip.lib.search import MultiPatternSearch
     and_keys = [and_key.lower() for and_key in topic['and_keys']]
     or_keys = [or_key.lower() for or_key in topic['or_keys']]
     not_keys = [not_key.lower() for not_key in sum(topic['not_keys'], [])]

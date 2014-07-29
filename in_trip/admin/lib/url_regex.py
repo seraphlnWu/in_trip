@@ -2,8 +2,8 @@
 import re
 from binascii import b2a_base64, a2b_base64
 
-from buzz.lib.store import mongo
-from buzz.lib.http import remove_schema
+from in_trip.lib.store import mongo
+from in_trip.lib.http import remove_schema
 
 from admin.config.consts import XPATH_STATUS, RECORD_STATUS
 

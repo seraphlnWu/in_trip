@@ -106,7 +106,7 @@ s = request.environ.get('beaker.session')
                     <label class="control-label" for="page_type">页面类型:</label>
                     <div class="controls">
                         <select name="page_type">
-                            <% from buzz.lib.consts import PAGE_TYPE %>
+                            <% from in_trip.lib.consts import PAGE_TYPE %>
                             <option value="${PAGE_TYPE.NORMAL_DETAIL_PAGE}">普通详情页</option>
                             <option value="${PAGE_TYPE.BBS_DETAIL_PAGE}">BBS 详情页</option>
                             <option value="${PAGE_TYPE.ASK_DETAIL_PAGE}">问答详情页</option>

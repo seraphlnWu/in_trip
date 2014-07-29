@@ -3,7 +3,7 @@ import urllib
 import json
 import re
 import base64
-from buzz.lib.store import db
+from in_trip.lib.store import db
 #import pymongo
 #db = pymongo.Connection('127.0.0.1')['buzz_master']
 import copy

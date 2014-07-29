@@ -29,10 +29,10 @@ from bottle import request
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </a>
-                    <a class="brand" href="#">Social Admin</a>
+                    <a class="brand" href="#">InTrip Admin</a>
                      <div class="nav-collapse">
                         <ul class="nav">
-                            <li class="active"><a href="/"><i class="icon-home icon-aqua"></i>BuzzMaster</a></li>
+                            <li class="active"><a href="/"><i class="icon-home icon-aqua"></i>InTrip</a></li>
                             <% s = request.environ.get('beaker.session') %>
                             % if s.get('mail', None) is not None:
                             <li><a href="#">${s['mail']}</a></li>

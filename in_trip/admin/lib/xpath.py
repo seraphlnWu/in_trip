@@ -2,8 +2,8 @@
 
 from admin.lib.url_regex import check_url_regex
 
-from buzz.lib.http import curl
-from buzz.lib.consts import HttpCode
+from in_trip.lib.http import curl
+from in_trip.lib.consts import HttpCode
 from readability.readability import Document
 
 def _validate(data, status=True, result=None):

@@ -167,8 +167,12 @@ class Arbiter(object):
             close_on_exec(p)
 
         if not self.LISTENERS and (self.bind or self.unix_socket):
-            self.file_logger.info("Listern on %s, unixdomian:%s", self.cfg.bind or "", self.cfg.unix_socket or "")
-            self.LISTENERS = create_sockets(self.bind, self.unix_socket, self.SOCK_BACKLOG)
+            self.file_logger.info("Listern on %s, unixdomian:%s",
+                                  self.cfg.bind or "",
+                                  self.cfg.unix_socket or "")
+            self.LISTENERS = create_sockets(self.bind,
+                                            self.unix_socket,
+                                            self.SOCK_BACKLOG)
 
         for s in self.LISTENERS:
             close_on_exec(s)
@@ -236,6 +240,7 @@ class Arbiter(object):
     def spawn_worker(self):
         self.worker_age += 1
         pid = os.fork()
+        worker_pid = os.getpid()
         if pid != 0: # parent
             self.WORKERS[pid] = self.worker_age # need worker's age param
             # self.file_logger.info("add pid:%s", pid)
@@ -243,7 +248,6 @@ class Arbiter(object):
         # process child
         try:
             worker = self.worker_class(self.cfg, self.file_logger, self.pid, self.LISTENERS)
-            worker_pid = os.getpid()
             self.file_logger.info("Booting worker with pid:%s", worker_pid)
             self.set_process_owner(self.uid, self.gid)
             worker.run()

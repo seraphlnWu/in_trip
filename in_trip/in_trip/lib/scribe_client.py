@@ -2,7 +2,7 @@
 import time
 import socket
 
-from scribe import scribe
+from scribe import Scribe
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport, TSocket
 

@@ -1,7 +1,7 @@
 <%inherit file="../base.html"/>
 <%!
 from json import dumps
-from buzz.lib.consts import INDUSTRY
+from in_trip.lib.consts import INDUSTRY
 industry_li = dumps(INDUSTRY)
 industries = [(ind_id, ind) for ind_id, ind in INDUSTRY.iteritems() if isinstance(ind_id, int)]
 %>

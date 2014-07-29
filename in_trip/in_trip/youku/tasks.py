@@ -1,6 +1,6 @@
 from rq import Queue,Worker,get_failed_queue
 from redis import Redis
-from buzz.store_data.utils import REDIS_HOST
+from in_trip.store_data.utils import REDIS_HOST
 from admin.lib.store import db
 #from pymongo import Connection
 import youku

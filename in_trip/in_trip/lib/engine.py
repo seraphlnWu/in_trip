@@ -50,7 +50,7 @@ class Engine(RPCServer):
                 if site.prior_level in scheduler:
                     scheduler[site.prior_level].append(site)
                 else:
-                    scheduler[site.prior_level] = [site, ]
+                    scheduler[site.prior_level] = [site]
                 sites[site.domain] = site
             self._sites = sites
             self._scheduler = scheduler
@@ -104,7 +104,7 @@ class Engine(RPCServer):
     def put_urls(self):
         while self.alive:
             while len(self._put_urls):
-                request =  self._put_urls.popleft()
+                request = self._put_urls.popleft()
                 if MQ.sismember(URL_IN_QUEUE_SET, request.md5):
                     continue
                 r = tyrant.get(request.md5)

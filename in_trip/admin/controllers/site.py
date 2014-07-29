@@ -36,14 +36,16 @@ def index(page):
 def add():
     url = request.forms.get('url')
     site_name = request.forms.get('site_name')
-    prior_level = int(request.forms.get('prior_level') or 1)
+    prior_level = int(request.forms.get('prior_level') or '1')
     industry_id = int(request.forms.get('industry_id'))
     domain = get_domain(url)
     site = site_find_one(domain=domain)
     if site:
         status = False
     else:
-        data = {'domain': domain, 'url': url, 'site_name': site_name, 'prior_level': prior_level, 'industry_id': industry_id, 'status': RECORD_STATUS.NORMAL}
+        data = {'domain': domain, 'url': url, 'site_name': site_name,
+                'prior_level': prior_level, 'industry_id': industry_id,
+                'status': RECORD_STATUS.NORMAL}
         site = Site(**data)
         site.save()
         status = True

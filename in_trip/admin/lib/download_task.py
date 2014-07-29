@@ -6,10 +6,10 @@ import datetime,time
 
 from cStringIO import StringIO
 
-from buzz.lib.store import mongo
+from in_trip.lib.store import mongo
 from admin.model import get_inc_id
 from admin.lib.topic import dump_topic
-from buzz.store_data.QueueService import DownloadQ
+from in_trip.store_data.QueueService import DownloadQ
 from admin.config.consts import RECORD_STATUS,DOWNLOAD_STATUS,DUMP_FILE_PATH
 
 def add_task(start,end,project_id,topic_id,dump_type):

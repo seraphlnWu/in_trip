@@ -2,8 +2,8 @@
 
 import os
 
-from buzz.lib.arbiter import Arbiter
-from buzz.lib.utils import parse_args
+from in_trip.lib.arbiter import Arbiter
+from in_trip.lib.utils import parse_args
 
 EXTRACTOR = "buzz.lib.extractor:Extractor"
 

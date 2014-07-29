@@ -1,7 +1,7 @@
 #encoding=utf-8
 import unittest
 
-from buzz.lib.http import get_domain
+from in_trip.lib.http import get_domain
 
 class TestUtilsFunc(unittest.TestCase):
     def setUp(self):

@@ -1,20 +1,34 @@
 #coding=utf-8
 
-import os
+'''
+spider app;
+to start spiders clients;
+'''
 
-from buzz.lib.arbiter import Arbiter
-from buzz.lib.utils import parse_args
+import sys
+from os import getcwd
 
-SPIDER = "buzz.lib.http:WebClient"
+from os.path import realpath, dirname, abspath, join
+sys.path.insert(
+    0,
+    realpath(join(dirname(__file__), '../'))
+)
+
+
+from in_trip.lib.arbiter import Arbiter
+from in_trip.lib.utils import parse_args
+
+SPIDER = "in_trip.lib.http:WebClient"
 
 def main():
+    ''' main loop of spider '''
     args = parse_args()
 
     config_file = getattr(args, 'config')
     section = getattr(args, 'section') or "spider"
     if config_file:
         if config_file[0] != '/':
-            config_file = os.path.join(os.getcwd(), os.path.abspath(config_file))
+            config_file = join(getcwd(), abspath(config_file))
 
     Arbiter(SPIDER, config_file, section).run()
 

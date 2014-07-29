@@ -1,22 +1,35 @@
 #coding=utf-8
+'''
+timer app;
+used to scheduler tasks;
+'''
 
-import os
+import sys
+from os import getcwd
 
-from buzz.lib.config import Config
-from buzz.lib.utils import parse_args
+from os.path import realpath, dirname, abspath, join
+sys.path.insert(
+    0,
+    realpath(join(dirname(__file__), '../'))
+)
+
+
+from in_trip.lib.config import Config
+from in_trip.lib.utils import parse_args
+from in_trip.lib.timer import Timer
 
 def main():
+    '''main loop of timer'''
     args = parse_args()
 
     config_file = getattr(args, 'config')
     section = getattr(args, 'section') or "timer"
     if config_file:
         if config_file[0] != '/':
-            config_file = os.path.join(os.getcwd(), os.path.abspath(config_file))
+            config_file = join(getcwd(), abspath(config_file))
 
     Config.ACTUAL_CONFIG_FILE = config_file
     Config.SECTION_NAME = section
-    from buzz.lib.timer import Timer
     Timer(Config()).run()
 
 if __name__ == '__main__':

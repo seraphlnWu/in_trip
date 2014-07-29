@@ -4,9 +4,9 @@ import time
 import pymongo
 import itertools
 
-from buzz.lib.store import mongo
-from buzz.lib.http import url_quote
-from buzz.lib.consts import INDUSTRY, PAGE_TYPE
+from in_trip.lib.store import mongo
+from in_trip.lib.http import url_quote
+from in_trip.lib.consts import INDUSTRY, PAGE_TYPE
 
 from admin.config.consts import XPATH_STATUS, RECORD_STATUS
 
